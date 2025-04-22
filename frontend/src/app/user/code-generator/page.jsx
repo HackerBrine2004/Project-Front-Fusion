@@ -1,20 +1,20 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 const extractCode = (text) => {
-  const codeBlockMatch = text.match(/```(?:html|jsx|tsx)?\n([\s\S]*?)```/);
-  if (codeBlockMatch) return codeBlockMatch[1].trim();
+  try {
+    const codeBlockMatch = text.match(/```(?:html|jsx|tsx)?\n([\s\S]*?)```/);
+    if (codeBlockMatch && codeBlockMatch[1]) return codeBlockMatch[1].trim();
 
-  return text
-    .split('\n')
-    .filter(line =>
-      !line.trim().startsWith('*') &&
-      !line.trim().toLowerCase().startsWith('key improvements') &&
-      !line.trim().startsWith('#') &&
-      !line.trim().startsWith('```')
-    )
-    .join('\n')
-    .trim();
+    return text
+      .split('\n')
+      .filter(line => !line.trim().match(/^(\*|#|```|key improvements)/i))
+      .join('\n')
+      .trim();
+  } catch (error) {
+    console.error("Error extracting code:", error);
+    return text;
+  }
 };
 
 const CodeGenerator = () => {
@@ -23,14 +23,24 @@ const CodeGenerator = () => {
   const [files, setFiles] = useState({});
   const [activeFile, setActiveFile] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [maximizedPanel, setMaximizedPanel] = useState(null); // 'code' or 'preview'
+  const [loading, setLoading] = useState({ generate: false, modify: false });
+  const [maximizedPanel, setMaximizedPanel] = useState(null);
+  const [modificationPrompt, setModificationPrompt] = useState('');
+  const fileInputRef = useRef(null);
+  const previewRef = useRef(null);
+
+  // Auto-scroll preview when code changes
+  useEffect(() => {
+    if (previewRef.current) {
+      previewRef.current.scrollTop = 0;
+    }
+  }, [files, activeFile]);
 
   const handleGenerate = async () => {
     setError('');
     setFiles({});
     setActiveFile('');
-    setLoading(true);
+    setLoading({ ...loading, generate: true });
 
     try {
       const finalPrompt = `${prompt} using ${framework === 'both' ? 'React and Tailwind CSS' : framework}`;
@@ -41,61 +51,220 @@ const CodeGenerator = () => {
         body: JSON.stringify({ prompt: finalPrompt }),
       });
 
-      if (!response.ok) {
-        const { error } = await response.json();
-        throw new Error(error || 'Failed to generate code');
+      // Check for HTML error responses
+      const contentType = response.headers.get('content-type');
+      if (!contentType?.includes('application/json')) {
+        const text = await response.text();
+        throw new Error(text.startsWith('<') ? 'Server error occurred' : text);
       }
 
       const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate code');
+      }
+
       const cleanedResult = extractCode(data.result || 'No code generated.');
       const fileData = data.files || { 'index.html': cleanedResult };
       setFiles(fileData);
-      setActiveFile(Object.keys(fileData)[0]);
+      setActiveFile(Object.keys(fileData)[0] || '');
     } catch (err) {
-      setError(err.message);
+      setError(err.message.includes('<!DOCTYPE') ? 'Server error occurred' : err.message);
+      console.error("Generation error:", err);
     } finally {
-      setLoading(false);
+      setLoading({ ...loading, generate: false });
     }
   };
 
-  const handleCopy = () => {
-    if (activeFile) navigator.clipboard.writeText(files[activeFile]);
+  const handleUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    const validExtensions = ['.html', '.js', '.jsx', '.tsx', '.css'];
+    const fileExt = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+    
+    if (!validExtensions.includes(fileExt)) {
+      setError('Please upload a valid file type (HTML, JS, JSX, TSX, CSS)');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setFiles({ [file.name]: event.target.result });
+      setActiveFile(file.name);
+      setError('');
+    };
+    reader.onerror = () => setError('Failed to read file');
+    reader.readAsText(file);
+  };
+
+  const handleModifyCode = async () => {
+    if (!activeFile || !modificationPrompt.trim()) {
+        setError('Please select a file and enter modification instructions');
+        return;
+    }
+
+    setError('');
+    setLoading({ ...loading, modify: true });
+
+    try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/code/modify-code`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                code: files[activeFile], // Ensure the correct file content is sent
+                instructions: modificationPrompt.trim(), // Trim the modification prompt
+                framework: framework
+            }),
+        });
+
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            if (text.startsWith('<!DOCTYPE') || text.startsWith('<html')) {
+                console.error('Server returned an HTML error page:', text);
+                throw new Error('Server error occurred - please try again later');
+            }
+            throw new Error(text || 'Server returned non-JSON response');
+        }
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to modify code');
+        }
+
+        const modifiedCode = extractCode(data.result || 'No modified code generated.');
+        setFiles({ ...files, [activeFile]: modifiedCode }); // Update the file content with the modified code
+        setModificationPrompt('');
+    } catch (err) {
+        if (err.message.includes('Failed to fetch')) {
+            setError('Network error - please check your connection');
+        } else if (err.message.includes('HTML error page')) {
+            setError('Server error occurred - please try again later');
+            console.error('Server error details:', err.message);
+        } else {
+            setError(err.message || 'An unexpected error occurred');
+        }
+        console.error("Modification error:", err);
+    } finally {
+        setLoading({ ...loading, modify: false });
+    }
+  };
+
+  const handleCopy = async () => {
+    if (!activeFile) return;
+    
+    try {
+      await navigator.clipboard.writeText(files[activeFile]);
+      const copyButton = document.querySelector('.copy-button');
+      if (copyButton) {
+        const originalText = copyButton.textContent;
+        copyButton.textContent = 'Copied!';
+        setTimeout(() => {
+          copyButton.textContent = originalText;
+        }, 2000);
+      }
+    } catch (err) {
+      setError('Failed to copy code');
+      console.error("Copy error:", err);
+    }
   };
 
   const handleFileChange = (fileName, content) => {
-    setFiles({ ...files, [fileName]: content });
+    if (!fileName || !content) return;
+    setFiles(prev => ({ ...prev, [fileName]: content }));
   };
 
   const handleDownloadFile = (fileName) => {
-    const blob = new Blob([files[fileName]], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    a.click();
-    URL.revokeObjectURL(url);
+    try {
+      if (!files[fileName]) return;
+      
+      const blob = new Blob([files[fileName]], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError('Failed to download file');
+      console.error("Download error:", err);
+    }
   };
 
   const handleDownloadAll = () => {
-    const zip = require('jszip')();
-    Object.keys(files).forEach((fileName) => {
-      zip.file(fileName, files[fileName]);
-    });
-    zip.generateAsync({ type: 'blob' }).then((content) => {
-      const url = URL.createObjectURL(content);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'generated-ui.zip';
-      a.click();
-      URL.revokeObjectURL(url);
-    });
+    try {
+      const zip = require('jszip')();
+      Object.keys(files).forEach((fileName) => {
+        zip.file(fileName, files[fileName]);
+      });
+      zip.generateAsync({ type: 'blob' }).then((content) => {
+        const url = URL.createObjectURL(content);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'generated-ui.zip';
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+    } catch (err) {
+      setError('Failed to create zip file');
+      console.error("Zip error:", err);
+    }
   };
 
   const toggleMaximize = (panel) => {
-    if (maximizedPanel === panel) {
-      setMaximizedPanel(null);
-    } else {
-      setMaximizedPanel(panel);
+    setMaximizedPanel(prev => prev === panel ? null : panel);
+  };
+
+  const handleEditWithAI = async () => {
+    if (!activeFile) {
+      setError('Please select a file to edit');
+      return;
+    }
+
+    if (!modificationPrompt.trim()) {
+      setError('Please provide a prompt for AI modification');
+      return;
+    }
+
+    setError('');
+    setLoading({ ...loading, modify: true });
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/code/edit-with-ai`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileName: activeFile,
+          fileContent: files[activeFile],
+          prompt: modificationPrompt,
+        }),
+      });
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        throw new Error(text || 'Server returned non-JSON response');
+      }
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to edit file with AI');
+      }
+
+      const updatedContent = extractCode(data.result || 'No changes made.');
+      setFiles({ ...files, [activeFile]: updatedContent });
+      setModificationPrompt('');
+    } catch (err) {
+      setError(err.message || 'An unexpected error occurred');
+      console.error("AI Edit error:", err);
+    } finally {
+      setLoading({ ...loading, modify: false });
     }
   };
 
@@ -105,13 +274,27 @@ const CodeGenerator = () => {
         <h1 className="text-4xl font-bold mb-10 text-center">⚡ Front-Fusion UI Generator</h1>
 
         <div className="bg-[#1a1a1d] p-6 rounded-2xl shadow-xl mb-8 border border-[#2a2a2e]">
-          <textarea
-            className="w-full bg-transparent text-white p-4 border border-[#333] rounded-xl mb-4 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
-            placeholder="Enter your UI prompt..."
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            rows={4}
-          />
+          <div className="flex flex-col md:flex-row gap-4 mb-4">
+            <textarea
+              className="w-full bg-transparent text-white p-4 border border-[#333] rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
+              placeholder="Enter your UI prompt..."
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              rows={4}
+              disabled={loading.generate || loading.modify}
+            />
+            
+            {Object.keys(files).length > 0 && (
+              <textarea
+                className="w-full bg-transparent text-white p-4 border border-[#333] rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
+                placeholder="How would you like to modify the code?"
+                value={modificationPrompt}
+                onChange={(e) => setModificationPrompt(e.target.value)}
+                rows={4}
+                disabled={loading.modify}
+              />
+            )}
+          </div>
 
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
             <div className="flex items-center gap-4">
@@ -120,23 +303,74 @@ const CodeGenerator = () => {
                 value={framework}
                 onChange={(e) => setFramework(e.target.value)}
                 className="bg-[#1a1a1d] text-white border border-[#333] rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                disabled={loading.generate || loading.modify}
               >
                 <option value="tailwind">Tailwind CSS</option>
                 <option value="react">React</option>
                 <option value="both">React + Tailwind</option>
               </select>
+              
+              <button
+                onClick={() => fileInputRef.current.click()}
+                className="bg-[#2a2a2e] text-white px-4 py-2 rounded-lg hover:bg-[#333] transition-all"
+                disabled={loading.generate || loading.modify}
+              >
+                Upload Code
+              </button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleUpload}
+                className="hidden"
+                accept=".html,.js,.jsx,.tsx,.css"
+              />
             </div>
 
-            <button
-              onClick={handleGenerate}
-              className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-all disabled:opacity-50"
-              disabled={loading}
-            >
-              {loading ? 'Generating...' : 'Generate UI'}
-            </button>
+            <div className="flex gap-2">
+              {Object.keys(files).length > 0 && modificationPrompt && (
+                <button
+                  onClick={handleModifyCode}
+                  className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-all disabled:opacity-50 flex items-center justify-center min-w-32"
+                  disabled={loading.modify || loading.generate}
+                >
+                  {loading.modify ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Modifying...
+                    </>
+                  ) : 'Modify Code'}
+                </button>
+              )}
+              
+              <button
+                onClick={handleGenerate}
+                className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-all disabled:opacity-50 flex items-center justify-center min-w-32"
+                disabled={loading.generate || loading.modify}
+              >
+                {loading.generate ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Generating...
+                  </>
+                ) : 'Generate UI'}
+              </button>
+            </div>
           </div>
 
-          {error && <p className="text-red-500">{error}</p>}
+          {error && (
+            <div className="text-red-500 p-2 bg-red-900/20 rounded-lg flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              {error}
+            </div>
+          )}
         </div>
 
         {Object.keys(files).length > 0 && (
@@ -149,6 +383,7 @@ const CodeGenerator = () => {
                     <button
                       onClick={handleDownloadAll}
                       className="text-sm text-purple-400 hover:underline"
+                      disabled={loading.generate || loading.modify}
                     >
                       Download All
                     </button>
@@ -165,6 +400,7 @@ const CodeGenerator = () => {
                           <button
                             onClick={(e) => { e.stopPropagation(); handleDownloadFile(file); }}
                             className="text-xs text-gray-400 hover:text-purple-400 ml-2"
+                            disabled={loading.generate || loading.modify}
                           >
                             ⬇
                           </button>
@@ -186,12 +422,14 @@ const CodeGenerator = () => {
                         onClick={() => toggleMaximize('code')}
                         className="text-gray-400 hover:text-white"
                         title={maximizedPanel === 'code' ? 'Minimize' : 'Maximize'}
+                        disabled={loading.generate || loading.modify}
                       >
                         {maximizedPanel === 'code' ? '🗗' : '🗖'}
                       </button>
                       <button
                         onClick={handleCopy}
-                        className="text-purple-400 text-sm hover:underline"
+                        className="text-purple-400 text-sm hover:underline copy-button"
+                        disabled={loading.generate || loading.modify}
                       >
                         Copy Code
                       </button>
@@ -200,7 +438,8 @@ const CodeGenerator = () => {
                   <textarea
                     value={files[activeFile] || ''}
                     onChange={(e) => handleFileChange(activeFile, e.target.value)}
-                    className="w-full h-[500px] bg-[#121214] text-green-400 p-4 rounded-lg border border-[#333] resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full h-[500px] bg-[#121214] text-green-400 p-4 rounded-lg border border-[#333] resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 font-mono text-sm"
+                    disabled={loading.modify}
                   />
                 </div>
               </div>
@@ -215,13 +454,15 @@ const CodeGenerator = () => {
                       onClick={() => toggleMaximize('preview')}
                       className="text-gray-400 hover:text-white"
                       title={maximizedPanel === 'preview' ? 'Minimize' : 'Maximize'}
+                      disabled={loading.generate || loading.modify}
                     >
                       {maximizedPanel === 'preview' ? '🗗' : '🗖'}
                     </button>
                   </div>
                   <div
+                    ref={previewRef}
                     className="bg-white p-4 rounded-xl text-black overflow-auto min-h-[500px]"
-                    dangerouslySetInnerHTML={{ __html: extractCode(files[activeFile] || '') }}
+                    dangerouslySetInnerHTML={{ __html: extractCode(files[activeFile] || '<div class="p-4 text-gray-500">No preview available</div>') }}
                   />
                 </div>
               </div>
