@@ -1,0 +1,46 @@
+{
+  "name": "frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@codesandbox/sandpack-react": "^2.20.0",
+    "@react-three/fiber": "^9.1.0",
+    "@react-three/postprocessing": "^3.0.4",
+    "@tabler/icons-react": "^3.31.0",
+    "axios": "^1.8.4",
+    "clsx": "^2.1.1",
+    "file-saver": "^2.0.5",
+    "formik": "^2.4.6",
+    "framer-motion": "^12.5.0",
+    "jszip": "^3.10.1",
+    "lucide-react": "^0.483.0",
+    "motion": "^12.7.4",
+    "next": "^15.2.1",
+    "ogl": "^1.0.11",
+    "postprocessing": "^6.37.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-hot-toast": "^2.5.2",
+    "react-slick": "^0.30.3",
+    "simplex-noise": "^4.0.3",
+    "slick-carousel": "^1.8.1",
+    "styled-components": "^6.1.16",
+    "tailwind-merge": "^3.2.0",
+    "three": "^0.174.0",
+    "yup": "^1.6.1"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "eslint": "^9",
+    "eslint-config-next": "15.2.1",
+    "preline": "^3.0.0",
+    "tailwindcss": "^4"
+  }
+}
