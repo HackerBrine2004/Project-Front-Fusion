@@ -78,6 +78,55 @@ const CodeGenerator = () => {
     }
   };
 
+  const handleModifyCode = async () => {
+    if (!activeFile || !files[activeFile]) {
+      setError('Please select a file to modify');
+      return;
+    }
+
+    if (!modificationPrompt.trim()) {
+      setError('Please enter modification instructions');
+      return;
+    }
+
+    setError('');
+    setLoading({ ...loading, modify: true });
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/code/modify-code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: files[activeFile],
+          instructions: modificationPrompt.trim(),
+          framework: framework
+        }),
+      });
+
+      // Check for HTML error responses
+      const contentType = response.headers.get('content-type');
+      if (!contentType?.includes('application/json')) {
+        const text = await response.text();
+        throw new Error(text.startsWith('<') ? 'Server error occurred' : text);
+      }
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to modify code');
+      }
+
+      const modifiedCode = extractCode(data.result || 'No modified code generated.');
+      setFiles(prev => ({ ...prev, [activeFile]: modifiedCode }));
+      setModificationPrompt('');
+    } catch (err) {
+      setError(err.message.includes('<!DOCTYPE') ? 'Server error occurred' : err.message);
+      console.error("Modification error:", err);
+    } finally {
+      setLoading({ ...loading, modify: false });
+    }
+  };
+
   const handleUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -99,60 +148,6 @@ const CodeGenerator = () => {
     };
     reader.onerror = () => setError('Failed to read file');
     reader.readAsText(file);
-  };
-
-  const handleModifyCode = async () => {
-    if (!activeFile || !modificationPrompt.trim()) {
-        setError('Please select a file and enter modification instructions');
-        return;
-    }
-
-    setError('');
-    setLoading({ ...loading, modify: true });
-
-    try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/code/modify-code`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                code: files[activeFile], // Ensure the correct file content is sent
-                instructions: modificationPrompt.trim(), // Trim the modification prompt
-                framework: framework
-            }),
-        });
-
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            const text = await response.text();
-            if (text.startsWith('<!DOCTYPE') || text.startsWith('<html')) {
-                console.error('Server returned an HTML error page:', text);
-                throw new Error('Server error occurred - please try again later');
-            }
-            throw new Error(text || 'Server returned non-JSON response');
-        }
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.error || 'Failed to modify code');
-        }
-
-        const modifiedCode = extractCode(data.result || 'No modified code generated.');
-        setFiles({ ...files, [activeFile]: modifiedCode }); // Update the file content with the modified code
-        setModificationPrompt('');
-    } catch (err) {
-        if (err.message.includes('Failed to fetch')) {
-            setError('Network error - please check your connection');
-        } else if (err.message.includes('HTML error page')) {
-            setError('Server error occurred - please try again later');
-            console.error('Server error details:', err.message);
-        } else {
-            setError(err.message || 'An unexpected error occurred');
-        }
-        console.error("Modification error:", err);
-    } finally {
-        setLoading({ ...loading, modify: false });
-    }
   };
 
   const handleCopy = async () => {
@@ -222,90 +217,6 @@ const CodeGenerator = () => {
     setMaximizedPanel(prev => prev === panel ? null : panel);
   };
 
-  const handleEditWithAI = async () => {
-    if (!activeFile) {
-      setError('Please select a file to edit');
-      return;
-    }
-
-    if (!modificationPrompt.trim()) {
-      setError('Please provide a prompt for AI modification');
-      return;
-    }
-
-    setError('');
-    setLoading({ ...loading, modify: true });
-
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/code/edit-with-ai`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fileName: activeFile,
-          fileContent: files[activeFile],
-          prompt: modificationPrompt,
-        }),
-      });
-
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        const text = await response.text();
-        throw new Error(text || 'Server returned non-JSON response');
-      }
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to edit file with AI');
-      }
-
-      const updatedContent = extractCode(data.result || 'No changes made.');
-      setFiles({ ...files, [activeFile]: updatedContent });
-      setModificationPrompt('');
-    } catch (err) {
-      setError(err.message || 'An unexpected error occurred');
-      console.error("AI Edit error:", err);
-    } finally {
-      setLoading({ ...loading, modify: false });
-    }
-  };
-
-  const handleCorrectCode = async () => {
-    if (!activeFile || !files[activeFile]) {
-      setError('No file selected or no code to correct.');
-      return;
-    }
-
-    setError('');
-    setLoading({ ...loading, modify: true });
-
-    try {
-      // Send the current file's code to the backend for correction
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/code/correct`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: files[activeFile] }),
-      });
-
-      // Handle response errors
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to correct code');
-      }
-
-      const data = await response.json();
-      const correctedCode = data.correctedCode || '<corrected-code>';
-
-      // Update the file with the corrected code
-      setFiles({ ...files, [activeFile]: correctedCode });
-    } catch (err) {
-      setError(err.message || 'An error occurred while correcting the code.');
-      console.error('Correction error:', err);
-    } finally {
-      setLoading({ ...loading, modify: false });
-    }
-  };
-
   return (
     <div className="min-h-screen bg-[#0f0f11] text-white px-6 py-10 font-mono">
       <div className="mt-15 max-w-7xl mx-auto">
@@ -367,9 +278,9 @@ const CodeGenerator = () => {
             <div className="flex gap-2">
               {Object.keys(files).length > 0 && (
                 <button
-                  onClick={handleCorrectCode}
+                  onClick={handleModifyCode}
                   className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-all disabled:opacity-50 flex items-center justify-center min-w-32"
-                  disabled={loading.modify || loading.generate}
+                  disabled={loading.modify || loading.generate || !modificationPrompt.trim()}
                 >
                   {loading.modify ? (
                     <>
@@ -377,9 +288,9 @@ const CodeGenerator = () => {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      Correcting...
+                      Modifying...
                     </>
-                  ) : 'Correct Code'}
+                  ) : 'Modify Code'}
                 </button>
               )}
 
