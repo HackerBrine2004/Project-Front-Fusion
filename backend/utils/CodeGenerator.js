@@ -26,6 +26,7 @@ const generate = async (prompt) => {
     return response.text();
   } catch (error) {
     console.log("response error", error);
+    throw new Error('Failed to generate content'); // Ensure errors are propagated
   } 
 };
  

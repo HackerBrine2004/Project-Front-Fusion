@@ -43,7 +43,9 @@ const CodeGenerator = () => {
     setLoading({ ...loading, generate: true });
 
     try {
-      const finalPrompt = `${prompt} using ${framework === 'both' ? 'React and Tailwind CSS' : framework}`;
+      const finalPrompt = prompt.trim()
+        ? `${prompt} using ${framework === 'both' ? 'React and Tailwind CSS' : framework}`
+        : 'Create a basic responsive UI using Tailwind CSS';
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/code/generate-ui`, {
         method: 'POST',
@@ -268,6 +270,42 @@ const CodeGenerator = () => {
     }
   };
 
+  const handleCorrectCode = async () => {
+    if (!activeFile || !files[activeFile]) {
+      setError('No file selected or no code to correct.');
+      return;
+    }
+
+    setError('');
+    setLoading({ ...loading, modify: true });
+
+    try {
+      // Send the current file's code to the backend for correction
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/code/correct`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: files[activeFile] }),
+      });
+
+      // Handle response errors
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to correct code');
+      }
+
+      const data = await response.json();
+      const correctedCode = data.correctedCode || '<corrected-code>';
+
+      // Update the file with the corrected code
+      setFiles({ ...files, [activeFile]: correctedCode });
+    } catch (err) {
+      setError(err.message || 'An error occurred while correcting the code.');
+      console.error('Correction error:', err);
+    } finally {
+      setLoading({ ...loading, modify: false });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#0f0f11] text-white px-6 py-10 font-mono">
       <div className="mt-15 max-w-7xl mx-auto">
@@ -327,9 +365,9 @@ const CodeGenerator = () => {
             </div>
 
             <div className="flex gap-2">
-              {Object.keys(files).length > 0 && modificationPrompt && (
+              {Object.keys(files).length > 0 && (
                 <button
-                  onClick={handleModifyCode}
+                  onClick={handleCorrectCode}
                   className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-all disabled:opacity-50 flex items-center justify-center min-w-32"
                   disabled={loading.modify || loading.generate}
                 >
@@ -339,12 +377,12 @@ const CodeGenerator = () => {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      Modifying...
+                      Correcting...
                     </>
-                  ) : 'Modify Code'}
+                  ) : 'Correct Code'}
                 </button>
               )}
-              
+
               <button
                 onClick={handleGenerate}
                 className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-all disabled:opacity-50 flex items-center justify-center min-w-32"

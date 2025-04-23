@@ -20,4 +20,21 @@ router.post('/generate-ui', async (req, res) => {
     }
 });
 
+// Route to correct UI based on additional prompt
+router.post('/correct-ui', async (req, res) => {
+    const { initialCode, correctionPrompt } = req.body;
+
+    if (!initialCode || !correctionPrompt || typeof correctionPrompt !== 'string' || !correctionPrompt.trim()) {
+        return res.status(400).json({ error: 'Initial code and valid correction prompt are required' });
+    }
+
+    try {
+        const result = await generate(`${correctionPrompt.trim()} based on the following code:\n\n${initialCode}`);
+        res.status(200).json({ result });
+    } catch (error) {
+        console.error('Error correcting UI:', error.message || error);
+        res.status(500).json({ error: 'Failed to correct UI. Please try again later.' });
+    }
+});
+
 module.exports = router;
