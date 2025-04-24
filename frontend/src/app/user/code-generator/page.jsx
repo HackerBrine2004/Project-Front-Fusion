@@ -1,6 +1,9 @@
 'use client';
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Sandpack } from '@codesandbox/sandpack-react';
+import Particles from 'react-tsparticles';
+import { loadSlim } from 'tsparticles-slim';
+import { tsParticles } from 'tsparticles-engine';
 
 const extractCode = (text) => {
   try {
@@ -19,7 +22,7 @@ const extractCode = (text) => {
 };
 
 const CodeGenerator = () => {
-  const [prompt, setPrompt] = useState('design a login page');
+  const [prompt, setPrompt] = useState('');
   const [framework, setFramework] = useState('tailwind');
   const [files, setFiles] = useState({});
   const [activeFile, setActiveFile] = useState('');
@@ -27,8 +30,13 @@ const CodeGenerator = () => {
   const [loading, setLoading] = useState({ generate: false, modify: false });
   const [maximizedPanel, setMaximizedPanel] = useState(null);
   const [modificationPrompt, setModificationPrompt] = useState('');
+  const [hasGenerated, setHasGenerated] = useState(false);
   const fileInputRef = useRef(null);
   const previewRef = useRef(null);
+
+  const particlesInit = useCallback(async (engine) => {
+    await loadSlim(engine);
+  }, []);
 
   // Auto-scroll preview when code changes
   useEffect(() => {
@@ -38,6 +46,7 @@ const CodeGenerator = () => {
   }, [files, activeFile]);
 
   const handleGenerate = async () => {
+    setHasGenerated(true);
     setError('');
     setFiles({});
     setActiveFile('');
@@ -54,7 +63,6 @@ const CodeGenerator = () => {
             body: JSON.stringify({ prompt: finalPrompt }),
         });
 
-        // Check for HTML error responses
         const contentType = response.headers.get('content-type');
         if (!contentType?.includes('application/json')) {
             const text = await response.text();
@@ -72,7 +80,6 @@ const CodeGenerator = () => {
         setFiles(fileData);
         setActiveFile(Object.keys(fileData)[0] || '');
 
-        // Scroll to the top of the page
         window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
         setError(err.message.includes('<!DOCTYPE') ? 'Server error occurred' : err.message);
@@ -107,7 +114,6 @@ const CodeGenerator = () => {
         }),
       });
 
-      // Check for HTML error responses
       const contentType = response.headers.get('content-type');
       if (!contentType?.includes('application/json')) {
         const text = await response.text();
@@ -135,7 +141,6 @@ const CodeGenerator = () => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Validate file type
     const validExtensions = ['.html', '.js', '.jsx', '.tsx', '.css'];
     const fileExt = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
     
@@ -222,8 +227,88 @@ const CodeGenerator = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0f0f11] text-white px-6 py-10 font-mono">
-      <div className="mt-15 max-w-7xl mx-auto">
+    <div className="min-h-screen bg-[#0f0f11] text-white px-6 py-10 font-mono relative overflow-hidden">
+      <Particles
+        id="tsparticles"
+        init={particlesInit}
+        options={{
+          background: {
+            color: "#0f0f11",
+          },
+          fpsLimit: 120,
+          interactivity: {
+            events: {
+              onClick: {
+                enable: true,
+                mode: "push",
+              },
+              onHover: {
+                enable: false,
+                mode: "repulse",
+                distance: 150,
+              },
+            },
+            modes: {
+              push: {
+                quantity: 4,
+              },
+              repulse: {
+                distance: 150,
+                duration: 0.4,
+              },
+            },
+          },
+          particles: {
+            color: {
+              value: "#7c3aed",
+            },
+            links: {
+              color: "#7c3aed",
+              distance: 150,
+              enable: true,
+              opacity: 0.8,
+              width: 1,
+            },
+            move: {
+              direction: "none",
+              enable: true,
+              outModes: {
+                default: "bounce",
+              },
+              random: false,
+              speed: 2,
+              straight: false,
+            },
+            number: {
+              density: {
+                enable: true,
+                area: 800,
+              },
+              value: 80,
+            },
+            opacity: {
+              value: 0.5,
+            },
+            shape: {
+              type: "circle",
+            },
+            size: {
+              value: { min: 1, max: 3 },
+            },
+          },
+          detectRetina: true,
+        }}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: -1,
+        }}
+      />
+
+      <div className="mt-15 max-w-7xl mx-auto relative z-10">
         <h1 className="text-4xl font-bold mb-10 text-center">⚡ Front-Fusion UI Generator</h1>
 
         <div className="bg-[#1a1a1d] p-6 rounded-2xl shadow-xl mb-8 border border-[#2a2a2e]">
@@ -265,7 +350,7 @@ const CodeGenerator = () => {
               
               <button
                 onClick={() => fileInputRef.current.click()}
-                className="bg-[#2a2a2e] text-white px-4 py-2 rounded-lg hover:bg-[#333] transition-all"
+                className="text-white px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 transition-all"
                 disabled={loading.generate || loading.modify}
               >
                 Upload Code
@@ -300,8 +385,14 @@ const CodeGenerator = () => {
 
               <button
                 onClick={handleGenerate}
-                className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-all disabled:opacity-50 flex items-center justify-center min-w-32"
-                disabled={loading.generate || loading.modify}
+                className={`text-white px-6 py-2 rounded-lg transition-all flex items-center justify-center min-w-32 ${
+                  loading.generate || loading.modify
+                    ? 'bg-purple-600 opacity-50'
+                    : prompt.trim()
+                    ? 'bg-purple-600 hover:bg-purple-700'
+                    : 'bg-purple-600/30 cursor-not-allowed'
+                }`}
+                disabled={loading.generate || loading.modify || !prompt.trim()}
               >
                 {loading.generate ? (
                   <>
@@ -311,7 +402,7 @@ const CodeGenerator = () => {
                     </svg>
                     Generating...
                   </>
-                ) : 'Generate UI'}
+                ) : hasGenerated ? 'Regenerate' : 'Generate UI'}
               </button>
             </div>
           </div>
