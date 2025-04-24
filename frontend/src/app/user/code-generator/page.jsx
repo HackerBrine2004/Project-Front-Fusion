@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
+import { Sandpack } from '@codesandbox/sandpack-react';
 
 const extractCode = (text) => {
   try {
@@ -43,38 +44,41 @@ const CodeGenerator = () => {
     setLoading({ ...loading, generate: true });
 
     try {
-      const finalPrompt = prompt.trim()
-        ? `${prompt} using ${framework === 'both' ? 'React and Tailwind CSS' : framework}`
-        : 'Create a basic responsive UI using Tailwind CSS';
+        const finalPrompt = prompt.trim()
+            ? `${prompt} using ${framework === 'both' ? 'React and Tailwind CSS' : framework}`
+            : 'Create a basic responsive UI using Tailwind CSS';
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/code/generate-ui`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: finalPrompt }),
-      });
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/code/generate-ui`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: finalPrompt }),
+        });
 
-      // Check for HTML error responses
-      const contentType = response.headers.get('content-type');
-      if (!contentType?.includes('application/json')) {
-        const text = await response.text();
-        throw new Error(text.startsWith('<') ? 'Server error occurred' : text);
-      }
+        // Check for HTML error responses
+        const contentType = response.headers.get('content-type');
+        if (!contentType?.includes('application/json')) {
+            const text = await response.text();
+            throw new Error(text.startsWith('<') ? 'Server error occurred' : text);
+        }
 
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to generate code');
-      }
+        const data = await response.json();
 
-      const cleanedResult = extractCode(data.result || 'No code generated.');
-      const fileData = data.files || { 'index.html': cleanedResult };
-      setFiles(fileData);
-      setActiveFile(Object.keys(fileData)[0] || '');
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to generate code');
+        }
+
+        const cleanedResult = extractCode(data.result || 'No code generated.');
+        const fileData = data.files || { 'index.html': cleanedResult };
+        setFiles(fileData);
+        setActiveFile(Object.keys(fileData)[0] || '');
+
+        // Scroll to the top of the page
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
-      setError(err.message.includes('<!DOCTYPE') ? 'Server error occurred' : err.message);
-      console.error("Generation error:", err);
+        setError(err.message.includes('<!DOCTYPE') ? 'Server error occurred' : err.message);
+        console.error("Generation error:", err);
     } finally {
-      setLoading({ ...loading, generate: false });
+        setLoading({ ...loading, generate: false });
     }
   };
 
@@ -416,6 +420,24 @@ const CodeGenerator = () => {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {Object.keys(files).length > 0 && (
+          <div className="mt-6">
+            <h2 className="text-lg font-semibold mb-4">👀 Sandpack Live Preview</h2>
+            <Sandpack
+              files={files}
+              theme="light"
+              template="react"
+              options={{
+                showConsoleButton: true,
+                showInlineErrors: true,
+                showNavigator: true,
+                showLineNumbers: true,
+                showTabs: true,
+              }}
+            />
           </div>
         )}
       </div>

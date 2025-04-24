@@ -37,4 +37,21 @@ router.post('/correct-ui', async (req, res) => {
     }
 });
 
+// Route to modify code based on client instructions
+router.post('/modify-code', async (req, res) => {
+    const { code, instructions } = req.body;
+
+    if (!code || !instructions || typeof instructions !== 'string' || !instructions.trim()) {
+        return res.status(400).json({ error: 'Code and valid modification instructions are required' });
+    }
+
+    try {
+        const result = await generate(`${instructions.trim()} based on the following code:\n\n${code}`);
+        res.status(200).json({ result });
+    } catch (error) {
+        console.error('Error modifying code:', error.message || error);
+        res.status(500).json({ error: 'Failed to modify code. Please try again later.' });
+    }
+});
+
 module.exports = router;
