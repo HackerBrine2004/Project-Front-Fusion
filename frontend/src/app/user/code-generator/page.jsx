@@ -57,6 +57,28 @@ const CodeGenerator = () => {
             ? `${prompt} using ${framework === 'both' ? 'React and Tailwind CSS' : framework}`
             : 'Create a basic responsive UI using Tailwind CSS';
 
+        // Add package.json for React projects
+        if (framework === 'react' || framework === 'both') {
+            const packageJson = {
+                name: "generated-ui",
+                version: "1.0.0",
+                private: true,
+                dependencies: {
+                    "react": "^18.2.0",
+                    "react-dom": "^18.2.0",
+                    "tailwindcss": "^3.3.0",
+                    "@tailwindcss/forms": "^0.5.7"
+                },
+                scripts: {
+                    "start": "react-scripts start",
+                    "build": "react-scripts build",
+                    "test": "react-scripts test",
+                    "eject": "react-scripts eject"
+                }
+            };
+            setFiles(prev => ({ ...prev, 'package.json': JSON.stringify(packageJson, null, 2) }));
+        }
+
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/code/generate-ui`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -77,7 +99,53 @@ const CodeGenerator = () => {
 
         const cleanedResult = extractCode(data.result || 'No code generated.');
         const fileData = data.files || { 'index.html': cleanedResult };
-        setFiles(fileData);
+        
+        // Add necessary React files if framework is React
+        if (framework === 'react' || framework === 'both') {
+            const reactFiles = {
+                'src/index.jsx': `import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import './index.css';
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);`,
+                'src/App.jsx': cleanedResult,
+                'src/index.css': `@tailwind base;
+@tailwind components;
+@tailwind utilities;`,
+                'tailwind.config.js': `module.exports = {
+  content: [
+    "./src/**/*.{js,jsx,ts,tsx}",
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [
+    require('@tailwindcss/forms'),
+  ],
+}`,
+                'public/index.html': `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Generated UI</title>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>`
+            };
+            setFiles(prev => ({ ...prev, ...reactFiles }));
+        } else {
+            setFiles(fileData);
+        }
+        
         setActiveFile(Object.keys(fileData)[0] || '');
 
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -402,7 +470,7 @@ const CodeGenerator = () => {
                     </svg>
                     Generating...
                   </>
-                ) : hasGenerated ? 'Regenerate' : 'Generate UI'}
+                ) : hasGenerated ? 'Generate Again' : 'Generate UI'}
               </button>
             </div>
           </div>
@@ -505,9 +573,29 @@ const CodeGenerator = () => {
                   </div>
                   <div
                     ref={previewRef}
-                    className="bg-white p-4 rounded-xl text-black overflow-auto min-h-[500px]"
-                    dangerouslySetInnerHTML={{ __html: extractCode(files[activeFile] || '<div class="p-4 text-gray-500">No preview available</div>') }}
-                  />
+                    className="bg-white rounded-xl text-black overflow-auto min-h-[500px]"
+                  >
+                    <iframe
+                      srcDoc={`
+                        <!DOCTYPE html>
+                        <html>
+                          <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                            <script src="https://cdn.tailwindcss.com"></script>
+                            <style>
+                              body { margin: 0; padding: 0; }
+                            </style>
+                          </head>
+                          <body>
+                            ${extractCode(files[activeFile] || '<div class="p-4 text-gray-500">No preview available</div>')}
+                          </body>
+                        </html>
+                      `}
+                      className="w-full h-[500px] border-0"
+                      title="Preview"
+                    />
+                  </div>
                 </div>
               </div>
             )}
@@ -519,14 +607,23 @@ const CodeGenerator = () => {
             <h2 className="text-lg font-semibold mb-4">👀 Sandpack Live Preview</h2>
             <Sandpack
               files={files}
-              theme="light"
-              template="react"
+              theme="dark"
+              template={framework === 'tailwind' ? 'static' : 'react'}
               options={{
                 showConsoleButton: true,
                 showInlineErrors: true,
                 showNavigator: true,
                 showLineNumbers: true,
                 showTabs: true,
+              }}
+              customSetup={{
+                dependencies: framework === 'tailwind' ? {} : {
+                  'react': '^18.2.0',
+                  'react-dom': '^18.2.0',
+                  'tailwindcss': '^3.3.0',
+                  '@tailwindcss/forms': '^0.5.7',
+                },
+                entry: framework === 'tailwind' ? '/index.html' : '/src/index.jsx',
               }}
             />
           </div>
