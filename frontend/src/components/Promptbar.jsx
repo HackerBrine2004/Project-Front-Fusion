@@ -5,10 +5,8 @@ import Link from "next/link";
 const GetStartedButton = ({ label = "Get Started" }) => {
   return (
     <StyledWrapper>
-      <Link href="/signup" passHref legacyBehavior>
-        <a className="get-started-button" aria-label={label}>
-          {label}
-        </a>
+      <Link href="/signup" className="get-started-button" aria-label={label}>
+        {label}
       </Link>
     </StyledWrapper>
   );
