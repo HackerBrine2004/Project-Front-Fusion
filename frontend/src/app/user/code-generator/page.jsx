@@ -5,7 +5,7 @@ import Particles from 'react-tsparticles';
 import { loadSlim } from 'tsparticles-slim';
 import { tsParticles } from 'tsparticles-engine';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
 const extractCode = (text) => {
@@ -30,89 +30,15 @@ const CodeGenerator = () => {
   const [files, setFiles] = useState({});
   const [activeFile, setActiveFile] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState({ generate: false, modify: false, save: false });
+  const [loading, setLoading] = useState({ generate: false, modify: false, save: false, load: false });
   const [maximizedPanel, setMaximizedPanel] = useState(null);
   const [modificationPrompt, setModificationPrompt] = useState('');
   const [hasGenerated, setHasGenerated] = useState(false);
   const [sessionName, setSessionName] = useState('');
   const fileInputRef = useRef(null);
   const previewRef = useRef(null);
-  const reactFiles2 = {
-    'src/main.jsx': `import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App'
-import './index.css'
-
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-)`,
-    'src/App.jsx': `import React from 'react'
-
-const App = () => {
-  return (
-    <div>App</div>
-  )
-}
-
-export default App`,
-    'src/index.css': `@tailwind base;
-@tailwind components;
-@tailwind utilities;`,
-    'tailwind.config.js': `/** @type {import('tailwindcss').Config} */
-export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
-  theme: {
-    extend: {},
-  },
-  plugins: [
-    require('@tailwindcss/forms'),
-  ],
-}`,
-    'index.html': `<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Generated UI</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
-</html>`,
-    'vite.config.js': `import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-
-export default defineConfig({
-  plugins: [react()],
-})`,
-    'package.json': `{
-  "name": "generated-ui",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "tailwindcss": "^3.3.0",
-    "@tailwindcss/forms": "^0.5.7"
-  },
-  "devDependencies": {
-    "@vitejs/plugin-react": "^4.2.0",
-    "vite": "^5.0.0"
-  }
-}`
-  };
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const particlesInit = useCallback(async (engine) => {
     await loadSlim(engine);
@@ -150,6 +76,62 @@ export default defineConfig({
       localStorage.setItem('hasGenerated', hasGenerated.toString());
     }
   }, [files, activeFile, hasGenerated]);
+
+  // Load session data if session ID is provided
+  useEffect(() => {
+    const sessionId = searchParams.get('session');
+    if (sessionId) {
+      loadSession(sessionId);
+    }
+  }, [searchParams]);
+
+  const loadSession = async (sessionId) => {
+    setLoading(prev => ({ ...prev, load: true }));
+    setError('');
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        router.push('/login');
+        return;
+      }
+
+      const response = await fetch(`${apiUrl}/code/sessions/${sessionId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('token');
+          router.push('/login');
+          return;
+        }
+        throw new Error(data.error || 'Failed to load session');
+      }
+
+      const session = data.session;
+      setPrompt(session.prompt || '');
+      setFramework(session.framework);
+      setFiles(session.files);
+      setActiveFile(session.activeFile || Object.keys(session.files)[0] || '');
+      setHasGenerated(session.hasGenerated);
+      setSessionName(session.name);
+
+      // Update URL to remove session ID
+      router.replace('/user/code-generator');
+    } catch (err) {
+      console.error('Error loading session:', err);
+      setError(err.message || 'Failed to load session');
+    } finally {
+      setLoading(prev => ({ ...prev, load: false }));
+    }
+  };
 
   const handleGenerate = async () => {
     setHasGenerated(true);
@@ -582,6 +564,16 @@ export default defineConfig({
           </Link>
         </div>
 
+        {loading.load && (
+          <div className="flex items-center justify-center mb-8">
+            <svg className="animate-spin h-8 w-8 text-purple-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span className="ml-2">Loading session...</span>
+          </div>
+        )}
+
         <div className="bg-[#1a1a1d] p-6 rounded-2xl shadow-xl mb-8 border border-[#2a2a2e]">
           <div className="flex flex-col md:flex-row gap-4 mb-4">
             <textarea
@@ -652,12 +644,6 @@ export default defineConfig({
                         Modifying...
                       </>
                     ) : 'Modify Code'}
-                  </button>
-                  <button
-                    onClick={handleClear}
-                    className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-all"
-                  >
-                    Clear All
                   </button>
                 </>
               )}

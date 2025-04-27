@@ -2,12 +2,19 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Particles from 'react-tsparticles';
+import { loadSlim } from 'tsparticles-slim';
+import { useCallback } from 'react';
 
 const SessionsPage = () => {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const router = useRouter();
+
+  const particlesInit = useCallback(async (engine) => {
+    await loadSlim(engine);
+  }, []);
 
   useEffect(() => {
     fetchSessions();
@@ -80,6 +87,19 @@ const SessionsPage = () => {
     return new Date(dateString).toLocaleString();
   };
 
+  const getFrameworkIcon = (framework) => {
+    switch (framework) {
+      case 'tailwind':
+        return '🎨';
+      case 'react':
+        return '⚛️';
+      case 'both':
+        return '🎨⚛️';
+      default:
+        return '📝';
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0f0f11] text-white px-6 py-10">
@@ -96,31 +116,124 @@ const SessionsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#0f0f11] text-white px-6 py-10">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-[#0f0f11] text-white px-6 py-18 relative overflow-hidden">
+      <Particles
+        id="tsparticles"
+        init={particlesInit}
+        options={{
+          background: {
+            color: "#0f0f11",
+          },
+          fpsLimit: 120,
+          interactivity: {
+            events: {
+              onClick: {
+                enable: true,
+                mode: "push",
+              },
+              onHover: {
+                enable: false,
+                mode: "repulse",
+                distance: 150,
+              },
+            },
+            modes: {
+              push: {
+                quantity: 4,
+              },
+              repulse: {
+                distance: 150,
+                duration: 0.4,
+              },
+            },
+          },
+          particles: {
+            color: {
+              value: "#7c3aed",
+            },
+            links: {
+              color: "#7c3aed",
+              distance: 150,
+              enable: true,
+              opacity: 0.8,
+              width: 1,
+            },
+            move: {
+              direction: "none",
+              enable: true,
+              outModes: {
+                default: "bounce",
+              },
+              random: false,
+              speed: 2,
+              straight: false,
+            },
+            number: {
+              density: {
+                enable: true,
+                area: 800,
+              },
+              value: 80,
+            },
+            opacity: {
+              value: 0.5,
+            },
+            shape: {
+              type: "circle",
+            },
+            size: {
+              value: { min: 1, max: 3 },
+            },
+          },
+          detectRetina: true,
+        }}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: -1,
+        }}
+      />
+
+      <div className="max-w-7xl mx-auto relative z-10">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold">Your Sessions</h1>
+          <div>
+            <h1 className="text-4xl font-bold mb-2">Your Sessions</h1>
+            <p className="text-gray-400">Manage and access your saved UI designs</p>
+          </div>
           <Link
             href="/user/code-generator"
-            className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-all"
+            className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-all flex items-center"
           >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+            </svg>
             New Session
           </Link>
         </div>
 
         {error && (
-          <div className="bg-red-900/20 text-red-500 p-4 rounded-lg mb-6">
+          <div className="bg-red-900/20 text-red-500 p-4 rounded-lg mb-6 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
             {error}
           </div>
         )}
 
         {sessions.length === 0 ? (
-          <div className="text-center py-12">
+          <div className="text-center py-12 bg-[#1a1a1d] rounded-2xl border border-[#2a2a2e]">
+            <div className="text-6xl mb-4">🎨</div>
             <p className="text-gray-400 mb-4">No sessions found</p>
             <Link
               href="/user/code-generator"
-              className="text-purple-400 hover:text-purple-300"
+              className="text-purple-400 hover:text-purple-300 inline-flex items-center"
             >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+              </svg>
               Create your first session
             </Link>
           </div>
@@ -129,11 +242,14 @@ const SessionsPage = () => {
             {sessions.map((session) => (
               <div
                 key={session._id}
-                className="bg-[#1a1a1d] p-6 rounded-2xl border border-[#2a2a2e] hover:border-purple-500 transition-all"
+                className="bg-[#1a1a1d] p-6 rounded-2xl border border-[#2a2a2e] hover:border-purple-500 transition-all group"
               >
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h2 className="text-xl font-semibold mb-2">{session.name}</h2>
+                    <div className="flex items-center mb-2">
+                      <span className="text-2xl mr-2">{getFrameworkIcon(session.framework)}</span>
+                      <h2 className="text-xl font-semibold">{session.name}</h2>
+                    </div>
                     <p className="text-sm text-gray-400">
                       Framework: {session.framework}
                     </p>
@@ -143,15 +259,21 @@ const SessionsPage = () => {
                   </div>
                   <button
                     onClick={() => handleDeleteSession(session._id)}
-                    className="text-red-400 hover:text-red-300"
+                    className="text-gray-400 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
                   >
-                    Delete
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
                   </button>
                 </div>
                 <Link
                   href={`/user/code-generator?session=${session._id}`}
-                  className="block w-full bg-purple-600 text-white text-center px-4 py-2 rounded-lg hover:bg-purple-700 transition-all"
+                  className="block w-full bg-purple-600 text-white text-center px-4 py-2 rounded-lg hover:bg-purple-700 transition-all flex items-center justify-center"
                 >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                    <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                  </svg>
                   Open Session
                 </Link>
               </div>
