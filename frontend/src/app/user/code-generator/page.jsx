@@ -4,6 +4,9 @@ import { Sandpack } from '@codesandbox/sandpack-react';
 import Particles from 'react-tsparticles';
 import { loadSlim } from 'tsparticles-slim';
 import { tsParticles } from 'tsparticles-engine';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 const extractCode = (text) => {
   try {
@@ -27,12 +30,89 @@ const CodeGenerator = () => {
   const [files, setFiles] = useState({});
   const [activeFile, setActiveFile] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState({ generate: false, modify: false });
+  const [loading, setLoading] = useState({ generate: false, modify: false, save: false });
   const [maximizedPanel, setMaximizedPanel] = useState(null);
   const [modificationPrompt, setModificationPrompt] = useState('');
   const [hasGenerated, setHasGenerated] = useState(false);
+  const [sessionName, setSessionName] = useState('');
   const fileInputRef = useRef(null);
   const previewRef = useRef(null);
+  const reactFiles2 = {
+    'src/main.jsx': `import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App'
+import './index.css'
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+)`,
+    'src/App.jsx': `import React from 'react'
+
+const App = () => {
+  return (
+    <div>App</div>
+  )
+}
+
+export default App`,
+    'src/index.css': `@tailwind base;
+@tailwind components;
+@tailwind utilities;`,
+    'tailwind.config.js': `/** @type {import('tailwindcss').Config} */
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [
+    require('@tailwindcss/forms'),
+  ],
+}`,
+    'index.html': `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Generated UI</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>`,
+    'vite.config.js': `import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+})`,
+    'package.json': `{
+  "name": "generated-ui",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "tailwindcss": "^3.3.0",
+    "@tailwindcss/forms": "^0.5.7"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.2.0",
+    "vite": "^5.0.0"
+  }
+}`
+  };
 
   const particlesInit = useCallback(async (engine) => {
     await loadSlim(engine);
@@ -45,6 +125,32 @@ const CodeGenerator = () => {
     }
   }, [files, activeFile]);
 
+  // Initialize state from localStorage on client side
+  useEffect(() => {
+    const savedFiles = localStorage.getItem('generatedFiles');
+    const savedActiveFile = localStorage.getItem('activeFile');
+    const savedHasGenerated = localStorage.getItem('hasGenerated');
+
+    if (savedFiles) {
+      setFiles(JSON.parse(savedFiles));
+    }
+    if (savedActiveFile) {
+      setActiveFile(savedActiveFile);
+    }
+    if (savedHasGenerated === 'true') {
+      setHasGenerated(true);
+    }
+  }, []);
+
+  // Save state to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('generatedFiles', JSON.stringify(files));
+      localStorage.setItem('activeFile', activeFile);
+      localStorage.setItem('hasGenerated', hasGenerated.toString());
+    }
+  }, [files, activeFile, hasGenerated]);
+
   const handleGenerate = async () => {
     setHasGenerated(true);
     setError('');
@@ -53,74 +159,53 @@ const CodeGenerator = () => {
     setLoading({ ...loading, generate: true });
 
     try {
-        const finalPrompt = prompt.trim()
-            ? `${prompt} using ${framework === 'both' ? 'React and Tailwind CSS' : framework}`
-            : 'Create a basic responsive UI using Tailwind CSS';
+      const finalPrompt = prompt.trim()
+        ? `${prompt} using ${framework === 'both' ? 'React and Tailwind CSS' : framework}`
+        : 'Create a basic responsive UI using Tailwind CSS';
 
-        // Add package.json for React projects
-        if (framework === 'react' || framework === 'both') {
-            const packageJson = {
-                name: "generated-ui",
-                version: "1.0.0",
-                private: true,
-                dependencies: {
-                    "react": "^18.2.0",
-                    "react-dom": "^18.2.0",
-                    "tailwindcss": "^3.3.0",
-                    "@tailwindcss/forms": "^0.5.7"
-                },
-                scripts: {
-                    "start": "react-scripts start",
-                    "build": "react-scripts build",
-                    "test": "react-scripts test",
-                    "eject": "react-scripts eject"
-                }
-            };
-            setFiles(prev => ({ ...prev, 'package.json': JSON.stringify(packageJson, null, 2) }));
-        }
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/code/generate-ui`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: finalPrompt }),
+      });
 
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/code/generate-ui`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: finalPrompt }),
-        });
+      const contentType = response.headers.get('content-type');
+      if (!contentType?.includes('application/json')) {
+        const text = await response.text();
+        throw new Error(text.startsWith('<') ? 'Server error occurred' : text);
+      }
 
-        const contentType = response.headers.get('content-type');
-        if (!contentType?.includes('application/json')) {
-            const text = await response.text();
-            throw new Error(text.startsWith('<') ? 'Server error occurred' : text);
-        }
+      const data = await response.json();
 
-        const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate code');
+      }
 
-        if (!response.ok) {
-            throw new Error(data.error || 'Failed to generate code');
-        }
+      const cleanedResult = extractCode(data.result || 'No code generated.');
+      const fileData = data.files || { 'index.html': cleanedResult };
 
-        const cleanedResult = extractCode(data.result || 'No code generated.');
-        const fileData = data.files || { 'index.html': cleanedResult };
-        
-        // Add necessary React files if framework is React
-        if (framework === 'react' || framework === 'both') {
-            const reactFiles = {
-                'src/index.jsx': `import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App';
-import './index.css';
+      // Add necessary React files if framework is React
+      if (framework === 'react' || framework === 'both') {
+        const reactFiles = {
+          'src/main.jsx': `import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App'
+import './index.css'
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
+ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <App />
   </React.StrictMode>
-);`,
-                'src/App.jsx': cleanedResult,
-                'src/index.css': `@tailwind base;
+)`,
+          'src/App.jsx': cleanedResult,
+          'src/index.css': `@tailwind base;
 @tailwind components;
 @tailwind utilities;`,
-                'tailwind.config.js': `module.exports = {
+          'tailwind.config.js': `/** @type {import('tailwindcss').Config} */
+export default {
   content: [
-    "./src/**/*.{js,jsx,ts,tsx}",
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {},
@@ -129,31 +214,59 @@ root.render(
     require('@tailwindcss/forms'),
   ],
 }`,
-                'public/index.html': `<!DOCTYPE html>
+          'index.html': `<!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Generated UI</title>
   </head>
   <body>
     <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
   </body>
-</html>`
-            };
-            setFiles(prev => ({ ...prev, ...reactFiles }));
-        } else {
-            setFiles(fileData);
-        }
-        
-        setActiveFile(Object.keys(fileData)[0] || '');
+</html>`,
+          'vite.config.js': `import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+export default defineConfig({
+  plugins: [react()],
+})`,
+          'package.json': `{
+  "name": "generated-ui",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "tailwindcss": "^3.3.0",
+    "@tailwindcss/forms": "^0.5.7"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.2.0",
+    "vite": "^5.0.0"
+  }
+}`
+        };
+        setFiles(prev => ({ ...prev, ...reactFiles }));
+      } else {
+        setFiles(fileData);
+      }
+
+      setActiveFile(Object.keys(fileData)[0] || '');
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
-        setError(err.message.includes('<!DOCTYPE') ? 'Server error occurred' : err.message);
-        console.error("Generation error:", err);
+      setError(err.message.includes('<!DOCTYPE') ? 'Server error occurred' : err.message);
+      console.error("Generation error:", err);
     } finally {
-        setLoading({ ...loading, generate: false });
+      setLoading({ ...loading, generate: false });
     }
   };
 
@@ -189,7 +302,7 @@ root.render(
       }
 
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.error || 'Failed to modify code');
       }
@@ -211,7 +324,7 @@ root.render(
 
     const validExtensions = ['.html', '.js', '.jsx', '.tsx', '.css'];
     const fileExt = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
-    
+
     if (!validExtensions.includes(fileExt)) {
       setError('Please upload a valid file type (HTML, JS, JSX, TSX, CSS)');
       return;
@@ -229,7 +342,7 @@ root.render(
 
   const handleCopy = async () => {
     if (!activeFile) return;
-    
+
     try {
       await navigator.clipboard.writeText(files[activeFile]);
       const copyButton = document.querySelector('.copy-button');
@@ -254,7 +367,7 @@ root.render(
   const handleDownloadFile = (fileName) => {
     try {
       if (!files[fileName]) return;
-      
+
       const blob = new Blob([files[fileName]], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -292,6 +405,88 @@ root.render(
 
   const toggleMaximize = (panel) => {
     setMaximizedPanel(prev => prev === panel ? null : panel);
+  };
+
+  // Add a clear button to reset the state
+  const handleClear = () => {
+    setFiles({});
+    setActiveFile('');
+    setHasGenerated(false);
+    setPrompt('');
+    setModificationPrompt('');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('generatedFiles');
+      localStorage.removeItem('activeFile');
+      localStorage.removeItem('hasGenerated');
+    }
+  };
+
+  const handleSaveSession = async () => {
+    if (!sessionName.trim()) {
+      setError('Please enter a session name');
+      return;
+    }
+
+    setLoading(prev => ({ ...prev, save: true }));
+    setError('');
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        setError('Please log in to save sessions');
+        router.push('/login');
+        return;
+      }
+
+      console.log('Saving session with data:', {
+        name: sessionName.trim(),
+        files,
+        framework,
+        prompt,
+        activeFile,
+        hasGenerated
+      });
+
+      const response = await fetch(`${apiUrl}/code/save-session`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: sessionName.trim(),
+          files,
+          framework,
+          prompt,
+          activeFile,
+          hasGenerated
+        }),
+      });
+
+      const data = await response.json();
+      console.log('Save session response:', data);
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('token');
+          setError('Session expired. Please log in again.');
+          router.push('/login');
+          return;
+        }
+        throw new Error(data.error || 'Failed to save session');
+      }
+
+      setSessionName('');
+      setError('Session saved successfully!');
+      setTimeout(() => setError(''), 3000);
+    } catch (err) {
+      console.error('Error saving session:', err);
+      setError(err.message || 'Failed to save session. Please try again later.');
+    } finally {
+      setLoading(prev => ({ ...prev, save: false }));
+    }
   };
 
   return (
@@ -377,7 +572,15 @@ root.render(
       />
 
       <div className="mt-15 max-w-7xl mx-auto relative z-10">
-        <h1 className="text-4xl font-bold mb-10 text-center">⚡ Front-Fusion UI Generator</h1>
+        <div className="flex justify-between items-center mb-10">
+          <h1 className="text-4xl font-bold">⚡ Front-Fusion UI Generator</h1>
+          <Link
+            href="/user/sessions"
+            className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-all"
+          >
+            View Sessions
+          </Link>
+        </div>
 
         <div className="bg-[#1a1a1d] p-6 rounded-2xl shadow-xl mb-8 border border-[#2a2a2e]">
           <div className="flex flex-col md:flex-row gap-4 mb-4">
@@ -389,7 +592,7 @@ root.render(
               rows={4}
               disabled={loading.generate || loading.modify}
             />
-            
+
             {Object.keys(files).length > 0 && (
               <textarea
                 className="w-full bg-transparent text-white p-4 border border-[#333] rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
@@ -415,7 +618,7 @@ root.render(
                 <option value="react">React</option>
                 <option value="both">React + Tailwind</option>
               </select>
-              
+
               <button
                 onClick={() => fileInputRef.current.click()}
                 className="text-white px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 transition-all"
@@ -434,32 +637,39 @@ root.render(
 
             <div className="flex gap-2">
               {Object.keys(files).length > 0 && (
-                <button
-                  onClick={handleModifyCode}
-                  className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-all disabled:opacity-50 flex items-center justify-center min-w-32"
-                  disabled={loading.modify || loading.generate || !modificationPrompt.trim()}
-                >
-                  {loading.modify ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Modifying...
-                    </>
-                  ) : 'Modify Code'}
-                </button>
+                <>
+                  <button
+                    onClick={handleModifyCode}
+                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-all disabled:opacity-50 flex items-center justify-center min-w-32"
+                    disabled={loading.modify || loading.generate || !modificationPrompt.trim()}
+                  >
+                    {loading.modify ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Modifying...
+                      </>
+                    ) : 'Modify Code'}
+                  </button>
+                  <button
+                    onClick={handleClear}
+                    className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-all"
+                  >
+                    Clear All
+                  </button>
+                </>
               )}
 
               <button
                 onClick={handleGenerate}
-                className={`text-white px-6 py-2 rounded-lg transition-all flex items-center justify-center min-w-32 ${
-                  loading.generate || loading.modify
+                className={`text-white px-6 py-2 rounded-lg transition-all flex items-center justify-center min-w-32 ${loading.generate || loading.modify
                     ? 'bg-purple-600 opacity-50'
                     : prompt.trim()
-                    ? 'bg-purple-600 hover:bg-purple-700'
-                    : 'bg-purple-600/30 cursor-not-allowed'
-                }`}
+                      ? 'bg-purple-600 hover:bg-purple-700'
+                      : 'bg-purple-600/30 cursor-not-allowed'
+                  }`}
                 disabled={loading.generate || loading.modify || !prompt.trim()}
               >
                 {loading.generate ? (
@@ -470,13 +680,44 @@ root.render(
                     </svg>
                     Generating...
                   </>
-                ) : hasGenerated ? 'Generate Again' : 'Generate UI'}
+                ) : hasGenerated ? 'Generate' : 'Generate UI'}
               </button>
             </div>
           </div>
 
+          {Object.keys(files).length > 0 && (
+            <div className="flex items-center gap-4 mt-4">
+              <input
+                type="text"
+                value={sessionName}
+                onChange={(e) => setSessionName(e.target.value)}
+                placeholder="Enter session name"
+                className="bg-transparent text-white p-2 border border-[#333] rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+              <button
+                onClick={handleSaveSession}
+                disabled={loading.save || !sessionName.trim()}
+                className={`text-white px-6 py-2 rounded-lg transition-all flex items-center justify-center min-w-32 ${
+                  loading.save || !sessionName.trim()
+                    ? 'bg-green-600 opacity-50'
+                    : 'bg-green-600 hover:bg-green-700'
+                }`}
+              >
+                {loading.save ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Saving...
+                  </>
+                ) : 'Save Session'}
+              </button>
+            </div>
+          )}
+
           {error && (
-            <div className="text-red-500 p-2 bg-red-900/20 rounded-lg flex items-center">
+            <div className={`text-${error.includes('successfully') ? 'green' : 'red'}-500 p-2 ${error.includes('successfully') ? 'bg-green-900/20' : 'bg-red-900/20'} rounded-lg flex items-center mt-4`}>
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
               </svg>
@@ -608,7 +849,7 @@ root.render(
             <Sandpack
               files={files}
               theme="dark"
-              template={framework === 'tailwind' ? 'static' : 'react'}
+              template={framework === 'tailwind' ? 'static' : 'vite-react'}
               options={{
                 showConsoleButton: true,
                 showInlineErrors: true,
@@ -622,8 +863,10 @@ root.render(
                   'react-dom': '^18.2.0',
                   'tailwindcss': '^3.3.0',
                   '@tailwindcss/forms': '^0.5.7',
+                  '@vitejs/plugin-react': '^4.2.0',
+                  'vite': '^5.0.0'
                 },
-                entry: framework === 'tailwind' ? '/index.html' : '/src/index.jsx',
+                entry: framework === 'tailwind' ? '/index.html' : '/src/main.jsx',
               }}
             />
           </div>

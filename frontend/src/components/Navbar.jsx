@@ -134,7 +134,7 @@ const Navbar = () => {
                   </Link>
                   <Link
                     className="py-2 px-2.5 inline-flex items-center font-medium text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 focus:outline-hidden focus:bg-blue-700"
-                    href="/signup"
+                    href="/register"
                   >
                     Sign Up
                   </Link>

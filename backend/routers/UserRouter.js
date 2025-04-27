@@ -3,6 +3,8 @@ const Model = require('../models/UserModels');
 const { model } = require('mongoose');
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
+const User = require('../models/User');
+const auth = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -129,6 +131,104 @@ router.post('/authenticate', (req, res) => {
 });
 });
 
+// Login endpoint
+router.post('/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
 
+        // Validate input
+        if (!email || !password) {
+            return res.status(400).json({ error: 'Email and password are required' });
+        }
+
+        // Find user
+        const user = await User.findOne({ email: email.toLowerCase() });
+        if (!user) {
+            return res.status(401).json({ error: 'Invalid email or password' });
+        }
+
+        // Check password
+        const isMatch = await user.comparePassword(password);
+        if (!isMatch) {
+            return res.status(401).json({ error: 'Invalid email or password' });
+        }
+
+        // Generate token
+        const token = jwt.sign(
+            { userId: user._id },
+            process.env.JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        res.json({
+            token,
+            user: {
+                id: user._id,
+                email: user.email,
+                name: user.name
+            }
+        });
+    } catch (error) {
+        console.error('Login error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Register endpoint
+router.post('/register', async (req, res) => {
+    try {
+        const { email, password, name } = req.body;
+
+        // Validate input
+        if (!email || !password || !name) {
+            return res.status(400).json({ error: 'All fields are required' });
+        }
+
+        // Check if user exists
+        const existingUser = await User.findOne({ email: email.toLowerCase() });
+        if (existingUser) {
+            return res.status(400).json({ error: 'Email already registered' });
+        }
+
+        // Create user
+        const user = new User({
+            email: email.toLowerCase(),
+            password,
+            name
+        });
+
+        await user.save();
+
+        // Generate token
+        const token = jwt.sign(
+            { userId: user._id },
+            process.env.JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        res.status(201).json({
+            token,
+            user: {
+                id: user._id,
+                email: user.email,
+                name: user.name
+            }
+        });
+    } catch (error) {
+        console.error('Registration error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Get current user
+router.get('/me', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).select('-password');
+        res.json(user);
+    } catch (error) {
+        console.error('Get user error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
 
 module.exports = router;

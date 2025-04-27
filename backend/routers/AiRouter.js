@@ -2,6 +2,8 @@ require('dotenv').config(); // Load environment variables from .env file
 const express = require('express');
 const router = express.Router();
 const generate = require('../utils/CodeGenerator'); // Ensure this path is correct
+const Session = require('../models/Session');
+const auth = require('../middleware/auth');
 
 // Route to generate UI for a page based on a prompt
 router.post('/generate-ui', async (req, res) => {
@@ -51,6 +53,159 @@ router.post('/modify-code', async (req, res) => {
     } catch (error) {
         console.error('Error modifying code:', error.message || error);
         res.status(500).json({ error: 'Failed to modify code. Please try again later.' });
+    }
+});
+
+// Route to save code session
+router.post('/save-session', auth, async (req, res) => {
+    const { name, files, framework, prompt, activeFile, hasGenerated } = req.body;
+
+    console.log('Save session request:', {
+        name,
+        files: Object.keys(files),
+        framework,
+        prompt,
+        activeFile,
+        hasGenerated,
+        userId: req.user._id
+    });
+
+    if (!name || !files || !framework) {
+        console.log('Missing required fields:', { name, files, framework });
+        return res.status(400).json({ error: 'Session name, files, and framework are required' });
+    }
+
+    try {
+        // Check if session with same name exists for user
+        const existingSession = await Session.findOne({ 
+            userId: req.user._id,
+            name: name.trim()
+        });
+
+        if (existingSession) {
+            console.log('Session with same name exists:', existingSession._id);
+            return res.status(400).json({ error: 'A session with this name already exists' });
+        }
+
+        const session = new Session({
+            name: name.trim(),
+            files,
+            framework,
+            prompt,
+            activeFile,
+            hasGenerated,
+            userId: req.user._id
+        });
+
+        await session.save();
+        console.log('Session saved successfully:', session._id);
+
+        res.status(200).json({ 
+            message: 'Session saved successfully',
+            session
+        });
+    } catch (error) {
+        console.error('Error saving session:', error);
+        res.status(500).json({ error: 'Failed to save session. Please try again later.' });
+    }
+});
+
+// Route to get all sessions for a user
+router.get('/sessions', auth, async (req, res) => {
+    try {
+        const sessions = await Session.find({ userId: req.user._id })
+            .sort({ createdAt: -1 })
+            .select('name framework createdAt updatedAt');
+
+        res.status(200).json({ sessions });
+    } catch (error) {
+        console.error('Error fetching sessions:', error.message || error);
+        res.status(500).json({ error: 'Failed to fetch sessions. Please try again later.' });
+    }
+});
+
+// Route to get a specific session
+router.get('/sessions/:id', auth, async (req, res) => {
+    try {
+        const session = await Session.findOne({
+            _id: req.params.id,
+            userId: req.user._id
+        });
+
+        if (!session) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        res.status(200).json({ session });
+    } catch (error) {
+        console.error('Error fetching session:', error.message || error);
+        res.status(500).json({ error: 'Failed to fetch session. Please try again later.' });
+    }
+});
+
+// Route to update a session
+router.put('/sessions/:id', auth, async (req, res) => {
+    const { name, files, framework, prompt, activeFile, hasGenerated } = req.body;
+
+    try {
+        const session = await Session.findOne({
+            _id: req.params.id,
+            userId: req.user._id
+        });
+
+        if (!session) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        // Check if new name conflicts with existing session
+        if (name && name !== session.name) {
+            const existingSession = await Session.findOne({
+                userId: req.user._id,
+                name: name.trim(),
+                _id: { $ne: req.params.id }
+            });
+
+            if (existingSession) {
+                return res.status(400).json({ error: 'A session with this name already exists' });
+            }
+        }
+
+        // Update session fields
+        if (name) session.name = name.trim();
+        if (files) session.files = files;
+        if (framework) session.framework = framework;
+        if (prompt !== undefined) session.prompt = prompt;
+        if (activeFile !== undefined) session.activeFile = activeFile;
+        if (hasGenerated !== undefined) session.hasGenerated = hasGenerated;
+
+        await session.save();
+
+        res.status(200).json({ 
+            message: 'Session updated successfully',
+            session
+        });
+    } catch (error) {
+        console.error('Error updating session:', error.message || error);
+        res.status(500).json({ error: 'Failed to update session. Please try again later.' });
+    }
+});
+
+// Route to delete a session
+router.delete('/sessions/:id', auth, async (req, res) => {
+    try {
+        const session = await Session.findOneAndDelete({
+            _id: req.params.id,
+            userId: req.user._id
+        });
+
+        if (!session) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        res.status(200).json({ message: 'Session deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting session:', error.message || error);
+        res.status(500).json({ error: 'Failed to delete session. Please try again later.' });
     }
 });
 

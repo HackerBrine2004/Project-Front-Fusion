@@ -293,7 +293,7 @@ const Navbar = () => {
                     </a>
                     <a
                       className="py-2 px-2.5 inline-flex items-center font-medium text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 focus:outline-hidden focus:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none"
-                      href="/signup"
+                      href="/register"
                     >
                       Sign Up
                     </a>
