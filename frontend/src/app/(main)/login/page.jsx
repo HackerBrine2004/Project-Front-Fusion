@@ -2,13 +2,24 @@
 import Navbar from '@/components/Navbar';
 import axios from 'axios';
 import { useFormik } from 'formik';
-import React from 'react';
+import React, { useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link'; // Import Link from Next.js
 
 const Login = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      // Get the return URL from query params or default to code generator
+      const returnUrl = searchParams.get('returnUrl') || '/user/code-generator';
+      router.replace(returnUrl);
+    }
+  }, [router, searchParams]);
 
   const loginForm = useFormik({
     initialValues: {
@@ -20,7 +31,10 @@ const Login = () => {
         .then((result) => {
           toast.success('Login successful!');
           localStorage.setItem('token', result.data.token);
-          router.replace('/user/code-generator'); // Replaces history entry
+          
+          // Get the return URL from query params or default to code generator
+          const returnUrl = searchParams.get('returnUrl') || '/user/code-generator';
+          router.replace(returnUrl);
         }).catch((err) => {
           console.error(err);
           toast.error('Login failed!');
@@ -37,7 +51,7 @@ const Login = () => {
             <h1 className="block text-2xl font-bold text-gray-800 dark:text-white">Sign in</h1>
             <p className="mt-2 text-sm text-gray-600 dark:text-neutral-400">
               Don't have an account yet?{' '}
-              <Link href="/signup" className="text-blue-600 decoration-2 hover:underline font-medium dark:text-blue-500">
+              <Link href="/register" className="text-blue-600 decoration-2 hover:underline font-medium dark:text-blue-500">
                 Sign up here
               </Link>
             </p>
