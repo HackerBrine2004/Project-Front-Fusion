@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Particles from 'react-tsparticles';
 import { loadSlim } from 'tsparticles-slim';
 import { useCallback } from 'react';
+import axios from 'axios';
 
 const SessionsPage = () => {
   const [sessions, setSessions] = useState([]);
@@ -24,7 +25,7 @@ const SessionsPage = () => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
       const token = localStorage.getItem('token');
-      
+
       if (!token) {
         router.push('/login');
         return;
@@ -62,7 +63,7 @@ const SessionsPage = () => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
       const token = localStorage.getItem('token');
-      
+
       const response = await fetch(`${apiUrl}/code/sessions/${sessionId}`, {
         method: 'DELETE',
         headers: {
@@ -94,7 +95,7 @@ const SessionsPage = () => {
       'Spectrum', 'Nexus', 'Fusion', 'Horizon', 'Vortex', 'Pulse',
       'Wave', 'Flow', 'Stream', 'Core', 'Node', 'Grid', 'Mesh', 'Frame'
     ];
-    
+
     const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
     const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
     return `${randomAdjective} ${randomNoun}`;
@@ -104,7 +105,7 @@ const SessionsPage = () => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
       const token = localStorage.getItem('token');
-      
+
       if (!token) {
         router.push('/login');
         return;
@@ -136,7 +137,8 @@ const SessionsPage = () => {
         }
         throw new Error(data.error || 'Failed to create session');
       }
-
+      console.log('Session created:', data.session);
+      
       // Redirect to code generator with the new session ID
       router.push(`/user/code-generator/${data.session._id}`);
     } catch (err) {
@@ -289,15 +291,15 @@ const SessionsPage = () => {
           <div className="text-center py-12 bg-[#1a1a1d] rounded-2xl border border-[#2a2a2e]">
             <div className="text-6xl mb-4">🎨</div>
             <p className="text-gray-400 mb-4">No sessions found</p>
-            <Link
-              href="/user/code-generator"
+            <button
+              onClick={createNewSession}
               className="text-purple-400 hover:text-purple-300 inline-flex items-center"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
               </svg>
               Create your first session
-            </Link>
+            </button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -347,4 +349,4 @@ const SessionsPage = () => {
   );
 };
 
-export default SessionsPage; 
+export default SessionsPage;
