@@ -5,7 +5,7 @@ import Particles from 'react-tsparticles';
 import { loadSlim } from 'tsparticles-slim';
 import { tsParticles } from 'tsparticles-engine';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import Link from 'next/link';
 
 const extractCode = (text) => {
@@ -30,15 +30,17 @@ const CodeGenerator = () => {
   const [files, setFiles] = useState({});
   const [activeFile, setActiveFile] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState({ generate: false, modify: false, save: false, load: false });
+  const [loading, setLoading] = useState({ generate: false, modify: false, save: false, load: false, update: false });
   const [maximizedPanel, setMaximizedPanel] = useState(null);
   const [modificationPrompt, setModificationPrompt] = useState('');
   const [hasGenerated, setHasGenerated] = useState(false);
   const [sessionName, setSessionName] = useState('');
+  const [sessionId, setSessionId] = useState('');
   const fileInputRef = useRef(null);
   const previewRef = useRef(null);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const params = useParams();
 
   const particlesInit = useCallback(async (engine) => {
     await loadSlim(engine);
@@ -79,13 +81,27 @@ const CodeGenerator = () => {
 
   // Load session data if session ID is provided
   useEffect(() => {
-    const sessionId = searchParams.get('session');
-    if (sessionId) {
-      loadSession(sessionId);
+    if (!params) {
+      console.error('No params available');
+      return;
     }
-  }, [searchParams]);
+
+    const id = params.id;
+    if (!id) {
+      console.error('No session ID found in params');
+      return;
+    }
+
+    setSessionId(id);
+    loadSession(id);
+  }, [params]);
 
   const loadSession = async (sessionId) => {
+    if (!sessionId) {
+      setError('No session ID provided');
+      return;
+    }
+
     setLoading(prev => ({ ...prev, load: true }));
     setError('');
 
@@ -115,13 +131,17 @@ const CodeGenerator = () => {
         throw new Error(data.error || 'Failed to load session');
       }
 
+      if (!data.session) {
+        throw new Error('Session data not found');
+      }
+
       const session = data.session;
       setPrompt(session.prompt || '');
-      setFramework(session.framework);
-      setFiles(session.files);
-      setActiveFile(session.activeFile || Object.keys(session.files)[0] || '');
-      setHasGenerated(session.hasGenerated);
-      setSessionName(session.name);
+      setFramework(session.framework || 'tailwind');
+      setFiles(session.files || {});
+      setActiveFile(session.activeFile || Object.keys(session.files || {})[0] || '');
+      setHasGenerated(session.hasGenerated || false);
+      setSessionName(session.name || '');
 
       // Update URL to remove session ID
       router.replace('/user/code-generator');
@@ -471,6 +491,63 @@ export default defineConfig({
     }
   };
 
+  const handleUpdateSession = async () => {
+    if (!sessionId) {
+      setError('No session to update');
+      return;
+    }
+
+    setLoading(prev => ({ ...prev, update: true }));
+    setError('');
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        setError('Please log in to update sessions');
+        router.push('/login');
+        return;
+      }
+
+      const response = await fetch(`${apiUrl}/code/sessions/${sessionId}`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: sessionName.trim() || 'New Session',
+          files,
+          framework,
+          prompt,
+          activeFile,
+          hasGenerated
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('token');
+          setError('Session expired. Please log in again.');
+          router.push('/login');
+          return;
+        }
+        throw new Error(data.error || 'Failed to update session');
+      }
+
+      setError('Session updated successfully!');
+      setTimeout(() => setError(''), 3000);
+    } catch (err) {
+      console.error('Error updating session:', err);
+      setError(err.message || 'Failed to update session. Please try again later.');
+    } finally {
+      setLoading(prev => ({ ...prev, update: false }));
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#0f0f11] text-white px-6 py-10 font-mono relative overflow-hidden">
       <Particles
@@ -556,12 +633,35 @@ export default defineConfig({
       <div className="mt-15 max-w-7xl mx-auto relative z-10">
         <div className="flex justify-between items-center mb-10">
           <h1 className="text-4xl font-bold">⚡ Front-Fusion UI Generator</h1>
-          <Link
-            href="/user/sessions"
-            className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-all"
-          >
-            View Sessions
-          </Link>
+          <div className="flex gap-4">
+            {sessionId && (
+              <button
+                onClick={handleUpdateSession}
+                disabled={loading.update}
+                className={`text-white px-6 py-2 rounded-lg transition-all flex items-center justify-center min-w-32 ${
+                  loading.update
+                    ? 'bg-blue-600 opacity-50'
+                    : 'bg-blue-600 hover:bg-blue-700'
+                }`}
+              >
+                {loading.update ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Updating...
+                  </>
+                ) : 'Update Session'}
+              </button>
+            )}
+            <Link
+              href="/user/sessions"
+              className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-all"
+            >
+              View Sessions
+            </Link>
+          </div>
         </div>
 
         {loading.load && (

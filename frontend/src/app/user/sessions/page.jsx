@@ -83,6 +83,68 @@ const SessionsPage = () => {
     }
   };
 
+  const generateRandomName = () => {
+    const adjectives = [
+      'Cosmic', 'Digital', 'Neon', 'Quantum', 'Cyber', 'Pixel', 'Virtual',
+      'Crystal', 'Ethereal', 'Mystic', 'Dynamic', 'Fusion', 'Nova', 'Prism',
+      'Solar', 'Lunar', 'Stellar', 'Atomic', 'Sonic', 'Vibrant'
+    ];
+    const nouns = [
+      'Interface', 'Design', 'Canvas', 'Matrix', 'Portal', 'Dimension',
+      'Spectrum', 'Nexus', 'Fusion', 'Horizon', 'Vortex', 'Pulse',
+      'Wave', 'Flow', 'Stream', 'Core', 'Node', 'Grid', 'Mesh', 'Frame'
+    ];
+    
+    const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
+    return `${randomAdjective} ${randomNoun}`;
+  };
+
+  const createNewSession = async () => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        router.push('/login');
+        return;
+      }
+
+      const response = await fetch(`${apiUrl}/code/save-session`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: generateRandomName(),
+          files: {},
+          framework: 'tailwind',
+          prompt: '',
+          activeFile: '',
+          hasGenerated: false
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('token');
+          router.push('/login');
+          return;
+        }
+        throw new Error(data.error || 'Failed to create session');
+      }
+
+      // Redirect to code generator with the new session ID
+      router.push(`/user/code-generator/${data.session._id}`);
+    } catch (err) {
+      console.error('Error creating session:', err);
+      setError(err.message || 'Failed to create session');
+    }
+  };
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleString();
   };
@@ -203,15 +265,15 @@ const SessionsPage = () => {
             <h1 className="text-4xl font-bold mb-2">Your Sessions</h1>
             <p className="text-gray-400">Manage and access your saved UI designs</p>
           </div>
-          <Link
-            href="/user/code-generator"
+          <button
+            onClick={createNewSession}
             className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-all flex items-center"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
             </svg>
             New Session
-          </Link>
+          </button>
         </div>
 
         {error && (
