@@ -15,8 +15,8 @@ const Login = () => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      // Get the return URL from query params or default to code generator
-      const returnUrl = searchParams.get('returnUrl') || '/user/code-generator';
+      // Get the return URL from query params or default to sessions page
+      const returnUrl = searchParams.get('returnUrl') || '/user/sessions';
       router.replace(returnUrl);
     }
   }, [router, searchParams]);
@@ -32,8 +32,8 @@ const Login = () => {
           toast.success('Login successful!');
           localStorage.setItem('token', result.data.token);
           
-          // Get the return URL from query params or default to code generator
-          const returnUrl = searchParams.get('returnUrl') || '/user/code-generator';
+          // Get the return URL from query params or default to sessions page
+          const returnUrl = searchParams.get('returnUrl') || '/user/sessions';
           router.replace(returnUrl);
         }).catch((err) => {
           console.error(err);
