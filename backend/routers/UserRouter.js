@@ -13,6 +13,9 @@ router.post('/add', (request, response) => {
     
     new Model(request.body).save()
         .then((result) => {
+            if (!request.body.sessionId) {
+                return response.status(400).json({ message: 'Session ID is required' });
+            }
             response.status(200).json(result);
         })
         .catch((error) => {

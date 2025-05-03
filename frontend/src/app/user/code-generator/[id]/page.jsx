@@ -39,8 +39,8 @@ const CodeGenerator = () => {
   const fileInputRef = useRef(null);
   const previewRef = useRef(null);
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const params = useParams();
+  // const searchParams = useSearchParams();
+  const {id} = useParams();
 
   const particlesInit = useCallback(async (engine) => {
     await loadSlim(engine);
@@ -81,12 +81,7 @@ const CodeGenerator = () => {
 
   // Load session data if session ID is provided
   useEffect(() => {
-    if (!params) {
-      console.error('No params available');
-      return;
-    }
 
-    const id = params.id;
     if (!id) {
       console.error('No session ID found in params');
       return;
@@ -94,7 +89,7 @@ const CodeGenerator = () => {
 
     setSessionId(id);
     loadSession(id);
-  }, [params]);
+  }, [id]);
 
   const loadSession = async (sessionId) => {
     if (!sessionId) {
@@ -144,7 +139,7 @@ const CodeGenerator = () => {
       setSessionName(session.name || '');
 
       // Update URL to remove session ID
-      router.replace('/user/code-generator');
+      // router.replace('/user/code-generator');
     } catch (err) {
       console.error('Error loading session:', err);
       setError(err.message || 'Failed to load session');

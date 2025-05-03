@@ -331,7 +331,7 @@ const SessionsPage = () => {
                   </button>
                 </div>
                 <Link
-                  href={`/user/code-generator?session=${session._id}`}
+                  href={`/user/code-generator/${session._id}`}
                   className="block w-full bg-purple-600 text-white text-center px-4 py-2 rounded-lg hover:bg-purple-700 transition-all flex items-center justify-center"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
