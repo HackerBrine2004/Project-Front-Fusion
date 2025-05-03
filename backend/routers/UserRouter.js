@@ -3,7 +3,7 @@ const Model = require('../models/UserModels');
 const { model } = require('mongoose');
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+// const User = require('../models/User');
 const auth = require('../middleware/auth');
 
 const router = express.Router();
@@ -13,9 +13,6 @@ router.post('/add', (request, response) => {
     
     new Model(request.body).save()
         .then((result) => {
-            if (!request.body.sessionId) {
-                return response.status(400).json({ message: 'Session ID is required' });
-            }
             response.status(200).json(result);
         })
         .catch((error) => {
@@ -177,51 +174,8 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// Register endpoint
-router.post('/register', async (req, res) => {
-    try {
-        const { email, password, name } = req.body;
 
-        // Validate input
-        if (!email || !password || !name) {
-            return res.status(400).json({ error: 'All fields are required' });
-        }
 
-        // Check if user exists
-        const existingUser = await User.findOne({ email: email.toLowerCase() });
-        if (existingUser) {
-            return res.status(400).json({ error: 'Email already registered' });
-        }
-
-        // Create user
-        const user = new User({
-            email: email.toLowerCase(),
-            password,
-            name
-        });
-
-        await user.save();
-
-        // Generate token
-        const token = jwt.sign(
-            { userId: user._id },
-            process.env.JWT_SECRET,
-            { expiresIn: '7d' }
-        );
-
-        res.status(201).json({
-            token,
-            user: {
-                id: user._id,
-                email: user.email,
-                name: user.name
-            }
-        });
-    } catch (error) {
-        console.error('Registration error:', error);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
 
 // Get current user
 router.get('/me', auth, async (req, res) => {

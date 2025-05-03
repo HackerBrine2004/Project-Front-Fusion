@@ -3,19 +3,14 @@ import React, { useState, useEffect, useRef } from "react";
 import { Menu, X, Bell } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const dropdownRef = useRef(null);
   const router = useRouter();
-
-  // Check if user is logged in
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    setIsLoggedIn(!!token);
-  }, []);
+  const { user, logout } = useAuth();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -32,10 +27,11 @@ const Navbar = () => {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    setIsLoggedIn(false);
+    logout();
     router.push('/login');
   };
+
+  const isLoggedIn = user;
 
   return (
     <>
@@ -160,13 +156,13 @@ const Navbar = () => {
                     <>
                       <Link
                         className="py-[7px] px-2.5 inline-flex items-center font-medium text-sm rounded-lg border border-gray-700 bg-transparent text-gray-200 hover:bg-violet-700 focus:outline-hidden focus:bg-violet-500"
-                        href="/login"
+                        href="/auth/login"
                       >
                         Log in
                       </Link>
                       <Link
                         className="py-2 px-2.5 inline-flex items-center font-medium text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 focus:outline-hidden focus:bg-blue-700"
-                        href="/register"
+                        href="/auth/register"
                       >
                         Sign Up
                       </Link>
