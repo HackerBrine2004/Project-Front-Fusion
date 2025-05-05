@@ -28,14 +28,14 @@ const Home = () => {
       {/* Floating Purple Border Box */}
       <div className="relative w-full mt-3 sm:mt-2  h-screen flex justify-center items-center">
         {/* Floating border element (positioned absolutely) */}
-        <div className="absolute inset-2 border-6 border-purple-500 rounded-xl mx-4 sm:mx-10 shadow-[0_0_20px_5px_rgba(168,85,247,0.3)] animate-float" 
+        {/* <div className="absolute inset-2 border-6 border-purple-500 rounded-xl mx-4 sm:mx-10 shadow-[0_0_20px_5px_rgba(168,85,247,0.3)] animate-float" 
              style={{
                margin: '5rem',
                pointerEvents: 'none'
-             }}></div>
+             }}></div> */}
         
         {/* Stable Content Container (not affected by float) */}
-        <div className="relative z-10 p-8 mx-4 sm:mx-10 backdrop-blur-sm bg-black/30 rounded-lg">
+        <div className="relative z-10 p-8 mx-4 sm:mx-10  rounded-lg">
           {/* Hero Section */}
           <div className="w-full flex flex-col justify-center mt-15 items-center text-center">
             <h1 className="text-4xl sm:text-4xl md:text-5xl font-bold text-white mb-4 leading-tight">
