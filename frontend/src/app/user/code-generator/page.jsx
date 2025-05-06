@@ -42,6 +42,8 @@ const CodeGenerator = () => {
   // const searchParams = useSearchParams();
   const {id} = useParams();
 
+  
+
   const particlesInit = useCallback(async (engine) => {
     await loadSlim(engine);
   }, []);
@@ -105,7 +107,7 @@ const CodeGenerator = () => {
       const token = localStorage.getItem('token');
       
       if (!token) {
-        router.push('/login');
+        router.push('/auth/login');
         return;
       }
 
@@ -120,7 +122,7 @@ const CodeGenerator = () => {
       if (!response.ok) {
         if (response.status === 401) {
           localStorage.removeItem('token');
-          router.push('/login');
+          router.push('/auth/login');
           return;
         }
         throw new Error(data.error || 'Failed to load session');
@@ -433,7 +435,7 @@ export default defineConfig({
       
       if (!token) {
         setError('Please log in to save sessions');
-        router.push('/login');
+        router.push('/auth/login');
         return;
       }
 
@@ -469,7 +471,7 @@ export default defineConfig({
         if (response.status === 401) {
           localStorage.removeItem('token');
           setError('Session expired. Please log in again.');
-          router.push('/login');
+          router.push('/auth/login');
           return;
         }
         throw new Error(data.error || 'Failed to save session');
@@ -501,7 +503,7 @@ export default defineConfig({
       
       if (!token) {
         setError('Please log in to update sessions');
-        router.push('/login');
+        router.push('/auth/login');
         return;
       }
 
@@ -527,7 +529,7 @@ export default defineConfig({
         if (response.status === 401) {
           localStorage.removeItem('token');
           setError('Session expired. Please log in again.');
-          router.push('/login');
+          router.push('/auth/login');
           return;
         }
         throw new Error(data.error || 'Failed to update session');

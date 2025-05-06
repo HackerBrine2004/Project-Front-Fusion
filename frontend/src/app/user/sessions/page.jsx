@@ -5,7 +5,6 @@ import Link from 'next/link';
 import Particles from 'react-tsparticles';
 import { loadSlim } from 'tsparticles-slim';
 import { useCallback } from 'react';
-import axios from 'axios';
 
 const SessionsPage = () => {
   const [sessions, setSessions] = useState([]);
@@ -25,7 +24,7 @@ const SessionsPage = () => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
       const token = localStorage.getItem('token');
-
+      
       if (!token) {
         router.push('/login');
         return;
@@ -42,7 +41,7 @@ const SessionsPage = () => {
       if (!response.ok) {
         if (response.status === 401) {
           localStorage.removeItem('token');
-          router.push('/login');
+          router.push('/auth/login');
           return;
         }
         throw new Error(data.error || 'Failed to fetch sessions');
@@ -63,7 +62,7 @@ const SessionsPage = () => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
       const token = localStorage.getItem('token');
-
+      
       const response = await fetch(`${apiUrl}/code/sessions/${sessionId}`, {
         method: 'DELETE',
         headers: {
@@ -84,69 +83,6 @@ const SessionsPage = () => {
     }
   };
 
-  const generateRandomName = () => {
-    const adjectives = [
-      'Cosmic', 'Digital', 'Neon', 'Quantum', 'Cyber', 'Pixel', 'Virtual',
-      'Crystal', 'Ethereal', 'Mystic', 'Dynamic', 'Fusion', 'Nova', 'Prism',
-      'Solar', 'Lunar', 'Stellar', 'Atomic', 'Sonic', 'Vibrant'
-    ];
-    const nouns = [
-      'Interface', 'Design', 'Canvas', 'Matrix', 'Portal', 'Dimension',
-      'Spectrum', 'Nexus', 'Fusion', 'Horizon', 'Vortex', 'Pulse',
-      'Wave', 'Flow', 'Stream', 'Core', 'Node', 'Grid', 'Mesh', 'Frame'
-    ];
-
-    const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
-    const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
-    return `${randomAdjective} ${randomNoun}`;
-  };
-
-  const createNewSession = async () => {
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      const token = localStorage.getItem('token');
-
-      if (!token) {
-        router.push('/login');
-        return;
-      }
-
-      const response = await fetch(`${apiUrl}/code/save-session`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          name: generateRandomName(),
-          files: {},
-          framework: 'tailwind',
-          prompt: '',
-          activeFile: '',
-          hasGenerated: false
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          localStorage.removeItem('token');
-          router.push('/login');
-          return;
-        }
-        throw new Error(data.error || 'Failed to create session');
-      }
-      console.log('Session created:', data.session);
-      
-      // Redirect to code generator with the new session ID
-      router.push(`/user/code-generator/${data.session._id}`);
-    } catch (err) {
-      console.error('Error creating session:', err);
-      setError(err.message || 'Failed to create session');
-    }
-  };
-
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleString();
   };
@@ -156,9 +92,9 @@ const SessionsPage = () => {
       case 'tailwind':
         return '🎨';
       case 'react':
-        return '⚛️';
+        return '⚛';
       case 'both':
-        return '🎨⚛️';
+        return '🎨⚛';
       default:
         return '📝';
     }
@@ -267,15 +203,15 @@ const SessionsPage = () => {
             <h1 className="text-4xl font-bold mb-2">Your Sessions</h1>
             <p className="text-gray-400">Manage and access your saved UI designs</p>
           </div>
-          <button
-            onClick={createNewSession}
+          <Link
+            href="/user/code-generator"
             className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-all flex items-center"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
             </svg>
             New Session
-          </button>
+          </Link>
         </div>
 
         {error && (
@@ -291,15 +227,15 @@ const SessionsPage = () => {
           <div className="text-center py-12 bg-[#1a1a1d] rounded-2xl border border-[#2a2a2e]">
             <div className="text-6xl mb-4">🎨</div>
             <p className="text-gray-400 mb-4">No sessions found</p>
-            <button
-              onClick={createNewSession}
+            <Link
+              href="/user/code-generator"
               className="text-purple-400 hover:text-purple-300 inline-flex items-center"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
               </svg>
               Create your first session
-            </button>
+            </Link>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -331,7 +267,7 @@ const SessionsPage = () => {
                   </button>
                 </div>
                 <Link
-                  href={`/user/code-generator/${session._id}`}
+                  href={`/user/code-generator?session=${session._id}`}
                   className="block w-full bg-purple-600 text-white text-center px-4 py-2 rounded-lg hover:bg-purple-700 transition-all flex items-center justify-center"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">

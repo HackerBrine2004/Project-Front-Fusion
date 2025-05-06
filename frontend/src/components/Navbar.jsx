@@ -28,7 +28,7 @@ const Navbar = () => {
 
   const handleLogout = () => {
     logout();
-    router.push('/login');
+    router.push('/auth/login');
   };
 
   const isLoggedIn = user;

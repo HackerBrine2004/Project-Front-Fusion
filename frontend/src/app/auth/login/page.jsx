@@ -29,7 +29,7 @@ const Register = () => {
         toast.success('successfully!logged in!');
         localStorage.setItem('token', result.data.token);
         resetForm();
-        router.push('/');
+        router.push('/user/code-generator');
       } catch (err) {
         console.error(err);
         toast.error('Login failed!');
@@ -43,7 +43,7 @@ const Register = () => {
   return (
     <div className="min-h-screen bg-[#0f0f11] text-white flex items-center justify-center">
       <div className="bg-[#1a1a1d] p-8 rounded-2xl shadow-xl w-full max-w-md border border-[#2a2a2e]">
-        <h1 className="text-3xl font-bold mb-6 text-center">Create Account</h1>
+        <h1 className="text-3xl font-bold mb-6 text-center">Login to your Account</h1>
 
         <form onSubmit={loginForm.handleSubmit} className="space-y-4">
 
@@ -81,7 +81,7 @@ const Register = () => {
               <div className="text-red-500 text-sm mt-1">{loginForm.errors.password}</div>
             ) : null}
           </div>
-          <button
+          <button 
             type="submit"
             disabled={loading}
             className={`w-full text-white px-6 py-2 rounded-lg transition-all ${loading ? 'bg-purple-600 opacity-50' : 'bg-purple-600 hover:bg-purple-700'
@@ -93,17 +93,17 @@ const Register = () => {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Creating account...
+                Signing in...
               </div>
             ) : (
-              'Create Account'
+              'Login'
             )}
           </button>
 
           <p className="text-center text-sm text-gray-400">
-            Already have an account?{' '}
-            <Link href="/signin" className="text-purple-400 hover:text-purple-300">
-              Sign in
+            Don't have an account?{' '}
+            <Link href="/auth/register" className="text-purple-400 hover:text-purple-300">
+              Sign up
             </Link>
           </p>
         </form>
