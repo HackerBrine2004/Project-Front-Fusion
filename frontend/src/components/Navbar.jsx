@@ -40,7 +40,7 @@ const Navbar = () => {
           <div className="flex justify-between items-center gap-x-1">
             <Link
               className="flex-none font-semibold text-3xl text-white focus:outline-hidden focus:opacity-80"
-              href="https://front-fusion.vercel.app/"
+              href="/"
             >
               Front-Fusion A.I
             </Link>

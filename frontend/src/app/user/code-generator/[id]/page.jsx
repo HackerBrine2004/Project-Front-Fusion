@@ -7,6 +7,7 @@ import { tsParticles } from 'tsparticles-engine';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import Link from 'next/link';
+import { jwtDecode } from 'jwt-decode';
 
 const extractCode = (text) => {
   try {
@@ -83,14 +84,14 @@ const CodeGenerator = () => {
 
   // Load session data if session ID is provided
   useEffect(() => {
-
-    if (!id) {
-      console.error('No session ID found in params');
-      return;
+    // Only attempt to load a session if an ID is provided in the URL
+    if (id) {
+      // Check if the session ID is valid
+      setSessionId(id);
+      loadSession(id);
     }
-
-    setSessionId(id);
-    loadSession(id);
+    console.log('Session ID:', id);
+    // Otherwise, we're creating a new session - no need to load anything
   }, [id]);
 
   const loadSession = async (sessionId) => {
@@ -120,11 +121,11 @@ const CodeGenerator = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        if (response.status === 401) {
-          localStorage.removeItem('token');
-          router.push('/auth/login');
-          return;
-        }
+        // if (response.status === 401) {
+        //   localStorage.removeItem('token');
+        //   router.push('/auth/login');
+        //   return;
+        // }
         throw new Error(data.error || 'Failed to load session');
       }
 
@@ -407,18 +408,18 @@ export default defineConfig({
   };
 
   // Add a clear button to reset the state
-  const handleClear = () => {
-    setFiles({});
-    setActiveFile('');
-    setHasGenerated(false);
-    setPrompt('');
-    setModificationPrompt('');
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('generatedFiles');
-      localStorage.removeItem('activeFile');
-      localStorage.removeItem('hasGenerated');
-    }
-  };
+  // const handleClear = () => {
+  //   setFiles({});
+  //   setActiveFile('');
+  //   setHasGenerated(false);
+  //   setPrompt('');
+  //   setModificationPrompt('');
+  //   if (typeof window !== 'undefined') {
+  //     localStorage.removeItem('generatedFiles');
+  //     localStorage.removeItem('activeFile');
+  //     localStorage.removeItem('hasGenerated');
+  //   }
+  // };
 
   const handleSaveSession = async () => {
     if (!sessionName.trim()) {
@@ -432,6 +433,8 @@ export default defineConfig({
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
       const token = localStorage.getItem('token');
+
+      const decodedToken = jwtDecode(token);
       
       if (!token) {
         setError('Please log in to save sessions');
@@ -469,9 +472,9 @@ export default defineConfig({
 
       if (!response.ok) {
         if (response.status === 401) {
-          localStorage.removeItem('token');
+          // localStorage.removeItem('token');
           setError('Session expired. Please log in again.');
-          router.push('/auth/login');
+          // router.push('/auth/login');
           return;
         }
         throw new Error(data.error || 'Failed to save session');
@@ -527,9 +530,9 @@ export default defineConfig({
 
       if (!response.ok) {
         if (response.status === 401) {
-          localStorage.removeItem('token');
+          // localStorage.removeItem('token');
           setError('Session expired. Please log in again.');
-          router.push('/auth/login');
+          // router.push('/auth/login');
           return;
         }
         throw new Error(data.error || 'Failed to update session');
