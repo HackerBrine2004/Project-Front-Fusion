@@ -138,7 +138,6 @@ const SessionsPage = () => {
         throw new Error(data.error || 'Failed to create session');
       }
       console.log('Session created:', data.session);
-      
       // Redirect to code generator with the new session ID
       router.push(`/user/code-generator/${data.session._id}`);
     } catch (err) {
