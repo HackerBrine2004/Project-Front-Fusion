@@ -82,10 +82,12 @@ router.post("/modify-code", async (req, res) => {
 
 // Route to save code session
 router.post('/save-session', auth, async (req, res) => {
+  console.log(req.body);
+  
     const { name, files, framework, prompt, activeFile, hasGenerated } = req.body;
   
     // Validation
-    if (!name?.trim() || !files || Object.keys(files).length === 0 || !framework) {
+    if (!name?.trim() || !files || !framework) {
       return res.status(400).json({ error: 'Session name, valid files, and framework are required' });
     }
   

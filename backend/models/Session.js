@@ -8,16 +8,18 @@ const sessionSchema = new mongoose.Schema({
     },
     files: {
         type: Object,
-        required: true
+        required: true,
+        default: {}
     },
     framework: {
         type: String,
         required: true,
-        enum: ['tailwind', 'react', 'both']
+        enum: ['tailwind', 'react', 'both'],
+        default: 'tailwind'
     },
     prompt: {
         type: String,
-        trim: true
+        trim: true,
     },
     activeFile: {
         type: String,

@@ -1,6 +1,5 @@
 const express = require('express');
 const Model = require('../models/UserModels');
-const { model } = require('mongoose');
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
 // const User = require('../models/User');

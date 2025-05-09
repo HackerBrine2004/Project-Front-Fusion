@@ -5,6 +5,7 @@ import Link from "next/link";
 import Particles from "react-tsparticles";
 import { loadSlim } from "tsparticles-slim";
 import { useCallback } from "react";
+import axios from "axios";
 
 const SessionsPage = () => {
   const [sessions, setSessions] = useState([]);
@@ -27,29 +28,29 @@ const SessionsPage = () => {
 
       if (!token) {
         router.push("/auth/login"); // Correct login path
+        return;
       }
 
-      // Update the fetch call to include credentials if needed
-      const response = await fetch(`${apiUrl}/code/sessions`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        credentials: "include", // Add if using cookies
-      });
+      try {
+        const response = await axios.get(`${apiUrl}/code/sessions`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          withCredentials: true, // Equivalent to credentials: "include"
+        });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        if (response.status === 401) {
+        setSessions(response.data.sessions);
+      } catch (error) {
+        if (error.response && error.response.status === 401) {
           localStorage.removeItem("token");
           router.push("/auth/login");
           return;
         }
-        throw new Error(data.error || "Failed to fetch sessions");
+        throw new Error(
+          error.response?.data?.error || "Failed to fetch sessions"
+        );
       }
-
-      setSessions(data.sessions);
     } catch (err) {
       console.error("Error fetching sessions:", err);
       setError(err.message || "Failed to fetch sessions");
@@ -68,7 +69,7 @@ const SessionsPage = () => {
         return;
       }
 
-      const response = await fetch(`${apiUrl}/code/sessions`, {
+      const response = await fetch(`${apiUrl}/code/save-session`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
