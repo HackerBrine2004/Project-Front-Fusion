@@ -7,6 +7,7 @@ import { tsParticles } from 'tsparticles-engine';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import Link from 'next/link';
+import { jwtDecode } from 'jwt-decode';
 
 const extractCode = (text) => {
   try {
@@ -39,8 +40,10 @@ const CodeGenerator = () => {
   const fileInputRef = useRef(null);
   const previewRef = useRef(null);
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const params = useParams();
+  // const searchParams = useSearchParams();
+  const {id} = useParams();
+
+  
 
   const particlesInit = useCallback(async (engine) => {
     await loadSlim(engine);
@@ -81,20 +84,15 @@ const CodeGenerator = () => {
 
   // Load session data if session ID is provided
   useEffect(() => {
-    if (!params) {
-      console.error('No params available');
-      return;
+    // Only attempt to load a session if an ID is provided in the URL
+    if (id) {
+      // Check if the session ID is valid
+      setSessionId(id);
+      loadSession(id);
     }
-
-    const id = params.id;
-    if (!id) {
-      console.error('No session ID found in params');
-      return;
-    }
-
-    setSessionId(id);
-    loadSession(id);
-  }, [params]);
+    console.log('Session ID:', id);
+    // Otherwise, we're creating a new session - no need to load anything
+  }, [id]);
 
   const loadSession = async (sessionId) => {
     if (!sessionId) {
@@ -110,7 +108,7 @@ const CodeGenerator = () => {
       const token = localStorage.getItem('token');
       
       if (!token) {
-        router.push('/login');
+        router.push('/auth/login');
         return;
       }
 
@@ -123,11 +121,11 @@ const CodeGenerator = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        if (response.status === 401) {
-          localStorage.removeItem('token');
-          router.push('/login');
-          return;
-        }
+        // if (response.status === 401) {
+        //   localStorage.removeItem('token');
+        //   router.push('/auth/login');
+        //   return;
+        // }
         throw new Error(data.error || 'Failed to load session');
       }
 
@@ -144,7 +142,7 @@ const CodeGenerator = () => {
       setSessionName(session.name || '');
 
       // Update URL to remove session ID
-      router.replace('/user/code-generator');
+      // router.replace('/user/code-generator');
     } catch (err) {
       console.error('Error loading session:', err);
       setError(err.message || 'Failed to load session');
@@ -410,18 +408,18 @@ export default defineConfig({
   };
 
   // Add a clear button to reset the state
-  const handleClear = () => {
-    setFiles({});
-    setActiveFile('');
-    setHasGenerated(false);
-    setPrompt('');
-    setModificationPrompt('');
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('generatedFiles');
-      localStorage.removeItem('activeFile');
-      localStorage.removeItem('hasGenerated');
-    }
-  };
+  // const handleClear = () => {
+  //   setFiles({});
+  //   setActiveFile('');
+  //   setHasGenerated(false);
+  //   setPrompt('');
+  //   setModificationPrompt('');
+  //   if (typeof window !== 'undefined') {
+  //     localStorage.removeItem('generatedFiles');
+  //     localStorage.removeItem('activeFile');
+  //     localStorage.removeItem('hasGenerated');
+  //   }
+  // };
 
   const handleSaveSession = async () => {
     if (!sessionName.trim()) {
@@ -435,10 +433,12 @@ export default defineConfig({
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
       const token = localStorage.getItem('token');
+
+      const decodedToken = jwtDecode(token);
       
       if (!token) {
         setError('Please log in to save sessions');
-        router.push('/login');
+        router.push('/auth/login');
         return;
       }
 
@@ -472,9 +472,9 @@ export default defineConfig({
 
       if (!response.ok) {
         if (response.status === 401) {
-          localStorage.removeItem('token');
+          // localStorage.removeItem('token');
           setError('Session expired. Please log in again.');
-          router.push('/login');
+          // router.push('/auth/login');
           return;
         }
         throw new Error(data.error || 'Failed to save session');
@@ -506,7 +506,7 @@ export default defineConfig({
       
       if (!token) {
         setError('Please log in to update sessions');
-        router.push('/login');
+        router.push('/auth/login');
         return;
       }
 
@@ -530,9 +530,9 @@ export default defineConfig({
 
       if (!response.ok) {
         if (response.status === 401) {
-          localStorage.removeItem('token');
+          // localStorage.removeItem('token');
           setError('Session expired. Please log in again.');
-          router.push('/login');
+          // router.push('/auth/login');
           return;
         }
         throw new Error(data.error || 'Failed to update session');

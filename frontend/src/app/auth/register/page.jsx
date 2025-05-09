@@ -2,66 +2,53 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import axios from 'axios';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
+import toast from 'react-hot-toast';
 
-export default function Register() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+const signupValidation = Yup.object().shape({
+  name: Yup.string().required('Name is required'),
+  email: Yup.string().email('Invalid email').required('Email is required'),
+  password: Yup.string().required('Password is required').min(6, 'Password must be at least 6 characters'),
+  confirmPassword: Yup.string().oneOf([Yup.ref('password'), null], 'Passwords must match').required('Confirm Password is required')
+});
+
+const Register = () => {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-
-    // Validate passwords match
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    // Validate password strength
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters long');
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      const response = await fetch(`${apiUrl}/user/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name, email, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to register');
+  const signupForm = useFormik({
+    initialValues: {
+      name: '',
+      email: '',
+      password: '',
+      confirmPassword: ''
+    },
+    onSubmit: async (values, { resetForm }) => {
+      setLoading(true);
+      try {
+        const result = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/add`, values);
+        console.log(result.data);
+        toast.success('Account created successfully!');
+        resetForm();
+        router.push('/auth/login');
+      } catch (err) {
+        console.error(err);
+        toast.error('Account creation failed!');
+      } finally {
+        setLoading(false);
       }
-
-      // Store token in localStorage
-      localStorage.setItem('token', data.token);
-      router.push('/user/code-generator');
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    validationSchema: signupValidation,
+  });
 
   return (
     <div className="min-h-screen bg-[#0f0f11] text-white flex items-center justify-center">
       <div className="bg-[#1a1a1d] p-8 rounded-2xl shadow-xl w-full max-w-md border border-[#2a2a2e]">
         <h1 className="text-3xl font-bold mb-6 text-center">Create Account</h1>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
+
+        <form onSubmit={signupForm.handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="name" className="block text-sm font-medium mb-2">
               Name
@@ -69,11 +56,14 @@ export default function Register() {
             <input
               type="text"
               id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              value={signupForm.values.name}
+              onChange={signupForm.handleChange}
               className="w-full bg-transparent text-white p-2 border border-[#333] rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
               required
             />
+            {signupForm.errors.name && signupForm.touched.name ? (
+              <div className="text-red-500 text-sm mt-1">{signupForm.errors.name}</div>
+            ) : null}
           </div>
 
           <div>
@@ -83,11 +73,14 @@ export default function Register() {
             <input
               type="email"
               id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={signupForm.values.email}
+              onChange={signupForm.handleChange}
               className="w-full bg-transparent text-white p-2 border border-[#333] rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
               required
             />
+            {signupForm.errors.email && signupForm.touched.email ? (
+              <div className="text-red-500 text-sm mt-1">{signupForm.errors.email}</div>
+            ) : null}
           </div>
 
           <div>
@@ -97,11 +90,14 @@ export default function Register() {
             <input
               type="password"
               id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={signupForm.values.password}
+              onChange={signupForm.handleChange}
               className="w-full bg-transparent text-white p-2 border border-[#333] rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
               required
             />
+            {signupForm.errors.password && signupForm.touched.password ? (
+              <div className="text-red-500 text-sm mt-1">{signupForm.errors.password}</div>
+            ) : null}
           </div>
 
           <div>
@@ -111,25 +107,20 @@ export default function Register() {
             <input
               type="password"
               id="confirmPassword"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              value={signupForm.values.confirmPassword}
+              onChange={signupForm.handleChange}
               className="w-full bg-transparent text-white p-2 border border-[#333] rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
               required
             />
+            {signupForm.errors.confirmPassword && signupForm.touched.confirmPassword ? (
+              <div className="text-red-500 text-sm mt-1">{signupForm.errors.confirmPassword}</div>
+            ) : null}
           </div>
-
-          {error && (
-            <div className="text-red-500 p-2 bg-red-900/20 rounded-lg">
-              {error}
-            </div>
-          )}
-
           <button
             type="submit"
             disabled={loading}
-            className={`w-full text-white px-6 py-2 rounded-lg transition-all ${
-              loading ? 'bg-purple-600 opacity-50' : 'bg-purple-600 hover:bg-purple-700'
-            }`}
+            className={`w-full text-white px-6 py-2 rounded-lg transition-all ${loading ? 'bg-purple-600 opacity-50' : 'bg-purple-600 hover:bg-purple-700'
+              }`}
           >
             {loading ? (
               <div className="flex items-center justify-center">
@@ -146,7 +137,7 @@ export default function Register() {
 
           <p className="text-center text-sm text-gray-400">
             Already have an account?{' '}
-            <Link href="/signin" className="text-purple-400 hover:text-purple-300">
+            <Link href="/auth/login" className="text-purple-400 hover:text-purple-300">
               Sign in
             </Link>
           </p>
@@ -154,4 +145,6 @@ export default function Register() {
       </div>
     </div>
   );
-} 
+}
+
+export default Register;

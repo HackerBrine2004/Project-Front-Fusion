@@ -5,7 +5,7 @@ import Link from "next/link";
 const GetStartedButton = ({ label = "Get Started" }) => {
   return (
     <StyledWrapper>
-      <Link href="/register" className="get-started-button" aria-label={label}>
+      <Link href="/user/sessions" className="get-started-button" aria-label={label}>
         {label}
       </Link>
     </StyledWrapper>

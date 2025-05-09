@@ -2,11 +2,15 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Menu, X, Bell } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const router = useRouter();
+  const { user, logout } = useAuth();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -22,6 +26,13 @@ const Navbar = () => {
     };
   }, []);
 
+  const handleLogout = () => {
+    logout();
+    router.push('/auth/login');
+  };
+
+  const isLoggedIn = user;
+
   return (
     <>
       <header className="fixed top-0 left-0 right-0 flex flex-wrap md:justify-start md:flex-nowrap z-50 w-full bg-black backdrop-blur-md border-b border-violet-500">
@@ -29,7 +40,7 @@ const Navbar = () => {
           <div className="flex justify-between items-center gap-x-1">
             <Link
               className="flex-none font-semibold text-3xl text-white focus:outline-hidden focus:opacity-80"
-              href="https://front-fusion.vercel.app/"
+              href="/"
             >
               Front-Fusion A.I
             </Link>
@@ -126,18 +137,37 @@ const Navbar = () => {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-x-1.5">
-                  <Link
-                    className="py-[7px] px-2.5 inline-flex items-center font-medium text-sm rounded-lg border border-gray-700 bg-transparent text-gray-200 hover:bg-violet-700 focus:outline-hidden focus:bg-violet-500"
-                    href="/login"
-                  >
-                    Log in
-                  </Link>
-                  <Link
-                    className="py-2 px-2.5 inline-flex items-center font-medium text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 focus:outline-hidden focus:bg-blue-700"
-                    href="/register"
-                  >
-                    Sign Up
-                  </Link>
+                  {isLoggedIn ? (
+                    <>
+                      <Link
+                        className="py-[7px] px-2.5 inline-flex items-center font-medium text-sm rounded-lg border border-gray-700 bg-transparent text-gray-200 hover:bg-violet-700 focus:outline-hidden focus:bg-violet-500"
+                        href="/user/sessions"
+                      >
+                        My Sessions
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className="py-2 px-2.5 inline-flex items-center font-medium text-sm rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-hidden focus:bg-red-700"
+                      >
+                        Logout
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Link
+                        className="py-[7px] px-2.5 inline-flex items-center font-medium text-sm rounded-lg border border-gray-700 bg-transparent text-gray-200 hover:bg-violet-700 focus:outline-hidden focus:bg-violet-500"
+                        href="/auth/login"
+                      >
+                        Log in
+                      </Link>
+                      <Link
+                        className="py-2 px-2.5 inline-flex items-center font-medium text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 focus:outline-hidden focus:bg-blue-700"
+                        href="/auth/register"
+                      >
+                        Sign Up
+                      </Link>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
