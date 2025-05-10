@@ -29,7 +29,7 @@ const Register = () => {
         toast.success('successfully!logged in!');
         localStorage.setItem('token', result.data.token);
         resetForm();
-        router.push('/');
+        router.push('/user/sessions');
       } catch (err) {
         console.error(err);
         toast.error('Login failed!');
