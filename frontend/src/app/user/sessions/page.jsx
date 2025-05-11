@@ -1,21 +1,15 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Particles from "react-tsparticles";
-import { loadSlim } from "tsparticles-slim";
-import { useCallback } from "react";
 import axios from "axios";
+import { Plus, Eye, Trash2, Loader2 } from "lucide-react";
 
 const SessionsPage = () => {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const router = useRouter();
-
-  const particlesInit = useCallback(async (engine) => {
-    await loadSlim(engine);
-  }, []);
 
   useEffect(() => {
     fetchSessions();
@@ -27,7 +21,7 @@ const SessionsPage = () => {
       const token = localStorage.getItem("token");
 
       if (!token) {
-        router.push("/auth/login"); // Correct login path
+        router.push("/auth/login");
         return;
       }
 
@@ -37,7 +31,7 @@ const SessionsPage = () => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-          withCredentials: true, // Equivalent to credentials: "include"
+          withCredentials: true,
         });
 
         setSessions(response.data.sessions);
@@ -61,6 +55,7 @@ const SessionsPage = () => {
 
   const createNewSession = async () => {
     try {
+      setLoading(true);
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
       const token = localStorage.getItem("token");
 
@@ -94,6 +89,8 @@ const SessionsPage = () => {
     } catch (err) {
       console.error("Error creating session:", err);
       setError(err.message || "Failed to create session");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -143,150 +140,54 @@ const SessionsPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0f0f11] text-white px-6 py-10">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-center">
-            <svg
-              className="animate-spin h-8 w-8 text-purple-500"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              ></circle>
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              ></path>
-            </svg>
-          </div>
+      <div className="min-h-screen bg-[#0f0f11] text-white flex items-center justify-center">
+        <div className="flex flex-col items-center justify-center gap-3">
+          <Loader2 className="size-12 text-violet-400 animate-spin" />
+          <p className="text-gray-400">Loading sessions...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0f0f11] text-white px-6 py-18 relative overflow-hidden">
-      <Particles
-        id="tsparticles"
-        init={particlesInit}
-        options={{
-          background: {
-            color: "#0f0f11",
-          },
-          fpsLimit: 120,
-          interactivity: {
-            events: {
-              onClick: {
-                enable: true,
-                mode: "push",
-              },
-              onHover: {
-                enable: false,
-                mode: "repulse",
-                distance: 150,
-              },
-            },
-            modes: {
-              push: {
-                quantity: 4,
-              },
-              repulse: {
-                distance: 150,
-                duration: 0.4,
-              },
-            },
-          },
-          particles: {
-            color: {
-              value: "#7c3aed",
-            },
-            links: {
-              color: "#7c3aed",
-              distance: 150,
-              enable: true,
-              opacity: 0.8,
-              width: 1,
-            },
-            move: {
-              direction: "none",
-              enable: true,
-              outModes: {
-                default: "bounce",
-              },
-              random: false,
-              speed: 2,
-              straight: false,
-            },
-            number: {
-              density: {
-                enable: true,
-                area: 800,
-              },
-              value: 80,
-            },
-            opacity: {
-              value: 0.5,
-            },
-            shape: {
-              type: "circle",
-            },
-            size: {
-              value: { min: 1, max: 3 },
-            },
-          },
-          detectRetina: true,
-        }}
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: "100%",
-          zIndex: -1,
-        }}
-      />
-
+    <div className="min-h-screen bg-[#0f0f11] text-white px-6 py-28 relative overflow-hidden">
+      {/* Animated background gradient */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-violet-900/20 to-transparent pointer-events-none"></div>
+      <div className="absolute bottom-0 left-0 right-0 h-96 bg-gradient-to-t from-blue-900/20 to-transparent pointer-events-none"></div>
+      
+      {/* Animated grid lines */}
+      <div className="absolute inset-0 bg-[radial-gradient(rgba(138,43,226,0.1)_1px,transparent_1px)] bg-[size:20px_20px] pointer-events-none"></div>
+      
       <div className="max-w-7xl mx-auto relative z-10">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-4">
           <div>
-            <h1 className="text-4xl font-bold mb-2">Your Sessions</h1>
+            <h1 className="text-4xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-cyan-300 to-violet-400 animate-gradient bg-300%">
+              Your Sessions
+            </h1>
             <p className="text-gray-400">
               Manage and access your saved UI designs
             </p>
           </div>
           <button
             onClick={createNewSession}
-            className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-all flex items-center"
+            disabled={loading}
+            className="relative py-3 px-6 rounded-lg bg-gradient-to-r from-violet-600/90 to-blue-600/90 text-white hover:from-violet-500 hover:to-blue-500 focus:outline-hidden focus:ring-2 focus:ring-violet-500/50 transition-all duration-200 shadow-[0_0_10px_rgba(138,43,226,0.3)] flex items-center group disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 mr-2"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                clipRule="evenodd"
-              />
-            </svg>
+            {loading ? (
+              <Loader2 className="size-5 mr-2 animate-spin" />
+            ) : (
+              <Plus className="size-5 mr-2 group-hover:rotate-90 transition-transform duration-300" />
+            )}
             New Session
+            <span className="absolute -bottom-1 -left-1 -right-1 h-[1px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500"></span>
           </button>
         </div>
 
         {error && (
-          <div className="bg-red-900/20 text-red-500 p-4 rounded-lg mb-6 flex items-center">
+          <div className="bg-red-900/20 border border-red-500/30 text-red-400 p-4 rounded-lg mb-8 flex items-center backdrop-blur-sm">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 mr-2"
+              className="h-5 w-5 mr-2 flex-shrink-0"
               viewBox="0 0 20 20"
               fill="currentColor"
             >
@@ -301,25 +202,19 @@ const SessionsPage = () => {
         )}
 
         {sessions.length === 0 ? (
-          <div className="text-center py-12 bg-[#1a1a1d] rounded-2xl border border-[#2a2a2e]">
+          <div className="text-center py-20 bg-black/50 rounded-2xl border border-violet-500/30 backdrop-blur-sm shadow-[0_4px_30px_rgba(138,43,226,0.2)]">
             <div className="text-6xl mb-4">🎨</div>
-            <p className="text-gray-400 mb-4">No sessions found</p>
+            <p className="text-gray-400 mb-6 text-lg">No sessions found</p>
             <button
               onClick={createNewSession}
-              className="text-purple-400 hover:text-purple-300 inline-flex items-center"
+              disabled={loading}
+              className="relative py-2 px-6 rounded-lg bg-gradient-to-r from-violet-600/80 to-blue-600/80 text-white hover:from-violet-500 hover:to-blue-500 focus:outline-hidden focus:ring-2 focus:ring-violet-500/50 transition-all duration-200 inline-flex items-center group disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 mr-2"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                  clipRule="evenodd"
-                />
-              </svg>
+              {loading ? (
+                <Loader2 className="size-5 mr-2 animate-spin" />
+              ) : (
+                <Plus className="size-5 mr-2 group-hover:rotate-90 transition-transform duration-300" />
+              )}
               Create your first session
             </button>
           </div>
@@ -328,65 +223,66 @@ const SessionsPage = () => {
             {sessions.map((session) => (
               <div
                 key={session._id}
-                className="bg-[#1a1a1d] p-6 rounded-2xl border border-[#2a2a2e] hover:border-purple-500 transition-all group"
+                className="bg-black/50 p-6 rounded-2xl border border-violet-500/30 hover:border-cyan-400 transition-all duration-300 group backdrop-blur-sm shadow-[0_4px_30px_rgba(138,43,226,0.1)] hover:shadow-[0_4px_30px_rgba(138,43,226,0.3)]"
               >
-                <div className="flex justify-between items-start mb-4">
+                <div className="flex justify-between items-start mb-6">
                   <div>
                     <div className="flex items-center mb-2">
                       <span className="text-2xl mr-2">
                         {getFrameworkIcon(session.framework)}
                       </span>
-                      <h2 className="text-xl font-semibold">{session.name}</h2>
+                      <h2 className="text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-300">
+                        {session.name}
+                      </h2>
                     </div>
-                    <p className="text-sm text-gray-400">
-                      Framework: {session.framework}
-                    </p>
-                    <p className="text-sm text-gray-400">
-                      Created: {formatDate(session.createdAt)}
-                    </p>
+                    <div className="flex flex-col gap-1">
+                      <p className="text-sm text-gray-400 flex items-center">
+                        <span className="w-2 h-2 rounded-full bg-violet-400 mr-2"></span>
+                        Framework: {session.framework}
+                      </p>
+                      <p className="text-sm text-gray-400 flex items-center">
+                        <span className="w-2 h-2 rounded-full bg-cyan-400 mr-2"></span>
+                        Created: {formatDate(session.createdAt)}
+                      </p>
+                    </div>
                   </div>
                   <button
                     onClick={() => handleDeleteSession(session._id)}
-                    className="text-gray-400 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                    className="text-gray-400 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 p-2 hover:bg-red-900/20 rounded-lg"
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
+                    <Trash2 className="size-5" />
                   </button>
                 </div>
                 <Link
                   href={`/user/code-generator/${session._id}`}
-                  className="  w-full bg-purple-600 text-white text-center px-4 py-2 rounded-lg hover:bg-purple-700 transition-all flex items-center justify-center"
+                  className="relative w-full inline-flex items-center justify-center py-2.5 px-4 rounded-lg bg-gradient-to-r from-violet-600/80 to-blue-600/80 text-white hover:from-violet-500 hover:to-blue-500 focus:outline-hidden focus:ring-2 focus:ring-violet-500/50 transition-all duration-200 group overflow-hidden"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 mr-2"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                    <path
-                      fillRule="evenodd"
-                      d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  Open Session
+                  <Eye className="size-5 mr-2 group-hover:scale-110 transition-transform duration-300" />
+                  <span className="relative z-10">Open Session</span>
+                  <span className="absolute bottom-0 left-0 w-full h-0 bg-gradient-to-r from-cyan-500/50 to-violet-500/50 group-hover:h-full transition-all duration-300 ease-in-out -z-0"></span>
                 </Link>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* Add CSS animations */}
+      <style jsx global>{`
+        @keyframes gradient {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        
+        .animate-gradient {
+          animation: gradient 8s ease infinite;
+        }
+        
+        .bg-300\\% {
+          background-size: 300% 300%;
+        }
+      `}</style>
     </div>
   );
 };

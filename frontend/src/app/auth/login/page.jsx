@@ -12,7 +12,7 @@ const loginFormValidation = Yup.object().shape({
   password: Yup.string().required('Password is required').min(6, 'Password must be at least 6 characters'),
 });
 
-const Register = () => {
+const Login = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -26,7 +26,7 @@ const Register = () => {
       try {
         const result = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/authenticate`, values);
         console.log(result.data);
-        toast.success('successfully!logged in!');
+        toast.success('Successfully logged in!');
         localStorage.setItem('token', result.data.token);
         resetForm();
         router.push('/user/sessions');
@@ -42,14 +42,14 @@ const Register = () => {
 
   return (
     <div className="min-h-screen bg-[#0f0f11] text-white flex items-center justify-center">
-      <div className="bg-[#1a1a1d] p-8 rounded-2xl shadow-xl w-full max-w-md border border-[#2a2a2e]">
-        <h1 className="text-3xl font-bold mb-6 text-center">Login to your Account</h1>
+      <div className="bg-black/70 p-8 rounded-2xl shadow-xl w-full max-w-md border border-violet-500/30 backdrop-blur-xl">
+        <h1 className="text-3xl font-semibold mb-6 text-center text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-cyan-300 to-violet-400 animate-gradient">
+          Login to Your Account
+        </h1>
 
         <form onSubmit={loginForm.handleSubmit} className="space-y-4">
-
-
           <div>
-            <label htmlFor="email" className="block text-sm font-medium mb-2">
+            <label htmlFor="email" className="block text-sm font-medium mb-2 text-gray-200">
               Email
             </label>
             <input
@@ -57,7 +57,7 @@ const Register = () => {
               id="email"
               value={loginForm.values.email}
               onChange={loginForm.handleChange}
-              className="w-full bg-transparent text-white p-2 border border-[#333] rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full bg-transparent text-white p-2 border border-[#333] rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
               required
             />
             {loginForm.errors.email && loginForm.touched.email ? (
@@ -66,7 +66,7 @@ const Register = () => {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium mb-2">
+            <label htmlFor="password" className="block text-sm font-medium mb-2 text-gray-200">
               Password
             </label>
             <input
@@ -74,18 +74,18 @@ const Register = () => {
               id="password"
               value={loginForm.values.password}
               onChange={loginForm.handleChange}
-              className="w-full bg-transparent text-white p-2 border border-[#333] rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full bg-transparent text-white p-2 border border-[#333] rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
               required
             />
             {loginForm.errors.password && loginForm.touched.password ? (
               <div className="text-red-500 text-sm mt-1">{loginForm.errors.password}</div>
             ) : null}
           </div>
-          <button 
+
+          <button
             type="submit"
             disabled={loading}
-            className={`w-full text-white px-6 py-2 rounded-lg transition-all ${loading ? 'bg-purple-600 opacity-50' : 'bg-purple-600 hover:bg-purple-700'
-              }`}
+            className={`w-full text-white px-6 py-2 rounded-lg transition-all ${loading ? 'bg-violet-600 opacity-50' : 'bg-violet-600 hover:bg-violet-700'}`}
           >
             {loading ? (
               <div className="flex items-center justify-center">
@@ -102,7 +102,7 @@ const Register = () => {
 
           <p className="text-center text-sm text-gray-400">
             Don't have an account?{' '}
-            <Link href="/auth/register" className="text-purple-400 hover:text-purple-300">
+            <Link href="/auth/register" className="text-violet-400 hover:text-violet-300">
               Sign up
             </Link>
           </p>
@@ -112,4 +112,4 @@ const Register = () => {
   );
 }
 
-export default Register;
+export default Login;

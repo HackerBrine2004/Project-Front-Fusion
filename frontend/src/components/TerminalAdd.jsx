@@ -6,7 +6,7 @@ const TerminalSection = () => {
   const [text, setText] = useState("");
   const canvasRef = useRef(null);
   const commands = [
-    "🔄 Booting up Front-Flow A.I...",
+    "🔄 Booting up Front-Fusion A.I...",
     "🚀 Connecting to server cloud...",
     "📦 Loading Tailwind CSS & React Components...",
     "🧠 AI Engine: Analyzing project structure...",

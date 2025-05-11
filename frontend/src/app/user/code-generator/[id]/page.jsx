@@ -549,101 +549,107 @@ export default defineConfig({
   };
 
   return (
-    <div className="min-h-screen bg-[#0f0f11] text-white px-6 py-10 font-mono relative overflow-hidden">
-      <Particles
-        id="tsparticles"
-        init={particlesInit}
-        options={{
-          background: {
-            color: "#0f0f11",
-          },
-          fpsLimit: 120,
-          interactivity: {
-            events: {
-              onClick: {
-                enable: true,
-                mode: "push",
-              },
-              onHover: {
-                enable: false,
-                mode: "repulse",
-                distance: 150,
-              },
+  <div className="min-h-screen bg-[#0f0f11] text-white px-6 py-10 font-mono relative overflow-hidden">
+    <Particles
+      id="tsparticles"
+      init={particlesInit}
+      options={{
+        background: {
+          color: "#0f0f11",
+        },
+        fpsLimit: 120,
+        interactivity: {
+          events: {
+            onClick: {
+              enable: true,
+              mode: "push",
             },
-            modes: {
-              push: {
-                quantity: 4,
-              },
-              repulse: {
-                distance: 150,
-                duration: 0.4,
-              },
-            },
-          },
-          particles: {
-            color: {
-              value: "#7c3aed",
-            },
-            links: {
-              color: "#7c3aed",
+            onHover: {
+              enable: false,
+              mode: "repulse",
               distance: 150,
-              enable: true,
-              opacity: 0.8,
-              width: 1,
-            },
-            move: {
-              direction: "none",
-              enable: true,
-              outModes: {
-                default: "bounce",
-              },
-              random: false,
-              speed: 2,
-              straight: false,
-            },
-            number: {
-              density: {
-                enable: true,
-                area: 800,
-              },
-              value: 80,
-            },
-            opacity: {
-              value: 0.5,
-            },
-            shape: {
-              type: "circle",
-            },
-            size: {
-              value: { min: 1, max: 3 },
             },
           },
-          detectRetina: true,
-        }}
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          zIndex: -1,
-        }}
-      />
+          modes: {
+            push: {
+              quantity: 4,
+            },
+            repulse: {
+              distance: 150,
+              duration: 0.4,
+            },
+          },
+        },
+        particles: {
+          color: {
+            value: "#7c3aed",
+          },
+          links: {
+            color: "#7c3aed",
+            distance: 150,
+            enable: true,
+            opacity: 0.8,
+            width: 1,
+          },
+          move: {
+            direction: "none",
+            enable: true,
+            outModes: {
+              default: "bounce",
+            },
+            random: false,
+            speed: 2,
+            straight: false,
+          },
+          number: {
+            density: {
+              enable: true,
+              area: 800,
+            },
+            value: 80,
+          },
+          opacity: {
+            value: 0.5,
+          },
+          shape: {
+            type: "circle",
+          },
+          size: {
+            value: { min: 1, max: 3 },
+          },
+        },
+        detectRetina: true,
+      }}
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        zIndex: -1,
+      }}
+    />
 
-      <div className="mt-15 max-w-7xl mx-auto relative z-10">
-        <div className="flex justify-between items-center mb-10">
-          <h1 className="text-4xl font-bold">⚡ Front-Fusion UI Generator</h1>
-          <div className="flex gap-4">
-            {sessionId && (
-              <button
-                onClick={handleUpdateSession}
-                disabled={loading.update}
-                className={`text-white px-6 py-2 rounded-lg transition-all flex items-center justify-center min-w-32 ${
-                  loading.update
-                    ? 'bg-blue-600 opacity-50'
-                    : 'bg-blue-600 hover:bg-blue-700'
-                }`}
-              >
+    {/* Ambient glowing orbs */}
+    <div className="fixed top-1/4 -left-32 w-64 h-64 rounded-full bg-violet-600/20 blur-3xl"></div>
+    <div className="fixed bottom-1/4 -right-32 w-64 h-64 rounded-full bg-cyan-600/20 blur-3xl"></div>
+
+    <div className="mt-15 max-w-7xl mx-auto relative z-10">
+      <div className="flex justify-between items-center mb-10">
+        <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-cyan-300 to-violet-400 animate-gradient bg-300%">⚡ Front-Fusion UI Generator</h1>
+        <div className="flex gap-4">
+          {sessionId && (
+            <button
+              onClick={handleUpdateSession}
+              disabled={loading.update}
+              className={`relative text-white px-6 py-2 rounded-lg transition-all flex items-center justify-center min-w-32 overflow-hidden group ${
+                loading.update
+                  ? 'bg-blue-600/50 opacity-50'
+                  : 'bg-blue-600/70 hover:bg-blue-600/90'
+              }`}
+            >
+              <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-blue-600/50 to-violet-600/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+              <span className="relative z-10 flex items-center">
                 {loading.update ? (
                   <>
                     <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -653,88 +659,99 @@ export default defineConfig({
                     Updating...
                   </>
                 ) : 'Update Session'}
-              </button>
-            )}
-            <Link
-              href="/user/sessions"
-              className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-all"
-            >
-              View Sessions
-            </Link>
-          </div>
+              </span>
+            </button>
+          )}
+          <Link
+            href="/user/sessions"
+            className="relative bg-gradient-to-r from-violet-600/70 to-purple-600/70 text-white px-6 py-2 rounded-lg hover:from-violet-500/90 hover:to-purple-500/90 transition-all overflow-hidden group shadow-[0_0_10px_rgba(138,43,226,0.2)]"
+          >
+            <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-violet-600/50 to-purple-600/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+            <span className="relative z-10">View Sessions</span>
+          </Link>
+        </div>
+      </div>
+
+      {loading.load && (
+        <div className="flex items-center justify-center mb-8">
+          <svg className="animate-spin h-8 w-8 text-violet-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span className="ml-2 text-cyan-300">Loading session...</span>
+        </div>
+      )}
+
+      <div className="bg-[#1a1a1d]/90 p-6 rounded-2xl shadow-xl mb-8 border border-violet-500/30 backdrop-blur-sm relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-violet-500/70 to-transparent"></div>
+        <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent"></div>
+        
+        <div className="flex flex-col md:flex-row gap-4 mb-4">
+          <textarea
+            className="w-full bg-black/40 text-white p-4 border border-violet-500/30 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-violet-500"
+            placeholder="Enter your UI prompt..."
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            rows={4}
+            disabled={loading.generate || loading.modify}
+          />
+
+          {Object.keys(files).length > 0 && (
+            <textarea
+              className="w-full bg-black/40 text-white p-4 border border-violet-500/30 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-violet-500"
+              placeholder="How would you like to modify the code?"
+              value={modificationPrompt}
+              onChange={(e) => setModificationPrompt(e.target.value)}
+              rows={4}
+              disabled={loading.modify}
+            />
+          )}
         </div>
 
-        {loading.load && (
-          <div className="flex items-center justify-center mb-8">
-            <svg className="animate-spin h-8 w-8 text-purple-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <span className="ml-2">Loading session...</span>
-          </div>
-        )}
-
-        <div className="bg-[#1a1a1d] p-6 rounded-2xl shadow-xl mb-8 border border-[#2a2a2e]">
-          <div className="flex flex-col md:flex-row gap-4 mb-4">
-            <textarea
-              className="w-full bg-transparent text-white p-4 border border-[#333] rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
-              placeholder="Enter your UI prompt..."
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              rows={4}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+          <div className="flex items-center gap-4">
+            <label className="text-sm text-gray-300">Use:</label>
+            <select
+              value={framework}
+              onChange={(e) => setFramework(e.target.value)}
+              className="bg-black/40 text-white border border-violet-500/30 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-violet-500"
               disabled={loading.generate || loading.modify}
-            />
+            >
+              <option value="tailwind">Tailwind CSS</option>
+              <option value="react">React</option>
+              <option value="both">React + Tailwind</option>
+            </select>
 
-            {Object.keys(files).length > 0 && (
-              <textarea
-                className="w-full bg-transparent text-white p-4 border border-[#333] rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
-                placeholder="How would you like to modify the code?"
-                value={modificationPrompt}
-                onChange={(e) => setModificationPrompt(e.target.value)}
-                rows={4}
-                disabled={loading.modify}
-              />
-            )}
+            <button
+              onClick={() => fileInputRef.current.click()}
+              className="text-white px-4 py-2 rounded-lg bg-gradient-to-r from-violet-600/70 to-purple-600/70 hover:from-violet-500/90 hover:to-purple-500/90 transition-all shadow-[0_0_10px_rgba(138,43,226,0.2)]"
+              disabled={loading.generate || loading.modify}
+            >
+              Upload Code
+            </button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleUpload}
+              className="hidden"
+              accept=".html,.js,.jsx,.tsx,.css"
+            />
           </div>
 
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
-            <div className="flex items-center gap-4">
-              <label className="text-sm text-gray-300">Use:</label>
-              <select
-                value={framework}
-                onChange={(e) => setFramework(e.target.value)}
-                className="bg-[#1a1a1d] text-white border border-[#333] rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                disabled={loading.generate || loading.modify}
-              >
-                <option value="tailwind">Tailwind CSS</option>
-                <option value="react">React</option>
-                <option value="both">React + Tailwind</option>
-              </select>
-
-              <button
-                onClick={() => fileInputRef.current.click()}
-                className="text-white px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 transition-all"
-                disabled={loading.generate || loading.modify}
-              >
-                Upload Code
-              </button>
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleUpload}
-                className="hidden"
-                accept=".html,.js,.jsx,.tsx,.css"
-              />
-            </div>
-
-            <div className="flex gap-2">
-              {Object.keys(files).length > 0 && (
-                <>
-                  <button
-                    onClick={handleModifyCode}
-                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-all disabled:opacity-50 flex items-center justify-center min-w-32"
-                    disabled={loading.modify || loading.generate || !modificationPrompt.trim()}
-                  >
+          <div className="flex gap-2">
+            {Object.keys(files).length > 0 && (
+              <>
+                <button
+                  onClick={handleModifyCode}
+                  className={`relative bg-gradient-to-r from-blue-600/70 to-cyan-600/70 text-white px-6 py-2 rounded-lg transition-all flex items-center justify-center min-w-32 overflow-hidden group shadow-[0_0_10px_rgba(0,149,255,0.2)] ${
+                    loading.modify || loading.generate || !modificationPrompt.trim() 
+                    ? 'opacity-50 cursor-not-allowed' 
+                    : 'hover:from-blue-500/90 hover:to-cyan-500/90'
+                  }`}
+                  disabled={loading.modify || loading.generate || !modificationPrompt.trim()}
+                >
+                  <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-blue-600/50 to-cyan-600/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                  <span className="relative z-10 flex items-center">
                     {loading.modify ? (
                       <>
                         <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -744,20 +761,24 @@ export default defineConfig({
                         Modifying...
                       </>
                     ) : 'Modify Code'}
-                  </button>
-                </>
-              )}
+                  </span>
+                </button>
+              </>
+            )}
 
-              <button
-                onClick={handleGenerate}
-                className={`text-white px-6 py-2 rounded-lg transition-all flex items-center justify-center min-w-32 ${loading.generate || loading.modify
-                    ? 'bg-purple-600 opacity-50'
-                    : prompt.trim()
-                      ? 'bg-purple-600 hover:bg-purple-700'
-                      : 'bg-purple-600/30 cursor-not-allowed'
-                  }`}
-                disabled={loading.generate || loading.modify || !prompt.trim()}
-              >
+            <button
+              onClick={handleGenerate}
+              className={`relative text-white px-6 py-2 rounded-lg transition-all flex items-center justify-center min-w-32 overflow-hidden group ${
+                loading.generate || loading.modify
+                  ? 'bg-violet-600/50 opacity-50 cursor-not-allowed'
+                  : prompt.trim()
+                    ? 'bg-gradient-to-r from-violet-600/70 to-purple-600/70 hover:from-violet-500/90 hover:to-purple-500/90 shadow-[0_0_10px_rgba(138,43,226,0.2)]'
+                    : 'bg-violet-600/30 cursor-not-allowed'
+                }`}
+              disabled={loading.generate || loading.modify || !prompt.trim()}
+            >
+              <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-violet-600/50 to-purple-600/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+              <span className="relative z-10 flex items-center">
                 {loading.generate ? (
                   <>
                     <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -767,28 +788,31 @@ export default defineConfig({
                     Generating...
                   </>
                 ) : hasGenerated ? 'Generate' : 'Generate UI'}
-              </button>
-            </div>
+              </span>
+            </button>
           </div>
+        </div>
 
-          {Object.keys(files).length > 0 && (
-            <div className="flex items-center gap-4 mt-4">
-              <input
-                type="text"
-                value={sessionName}
-                onChange={(e) => setSessionName(e.target.value)}
-                placeholder="Enter session name"
-                className="bg-transparent text-white p-2 border border-[#333] rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-              />
-              <button
-                onClick={handleSaveSession}
-                disabled={loading.save || !sessionName.trim()}
-                className={`text-white px-6 py-2 rounded-lg transition-all flex items-center justify-center min-w-32 ${
-                  loading.save || !sessionName.trim()
-                    ? 'bg-green-600 opacity-50'
-                    : 'bg-green-600 hover:bg-green-700'
-                }`}
-              >
+        {Object.keys(files).length > 0 && (
+          <div className="flex items-center gap-4 mt-4">
+            <input
+              type="text"
+              value={sessionName}
+              onChange={(e) => setSessionName(e.target.value)}
+              placeholder="Enter session name"
+              className="bg-black/40 text-white p-2 border border-violet-500/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
+            />
+            <button
+              onClick={handleSaveSession}
+              disabled={loading.save || !sessionName.trim()}
+              className={`relative text-white px-6 py-2 rounded-lg transition-all flex items-center justify-center min-w-32 overflow-hidden group ${
+                loading.save || !sessionName.trim()
+                  ? 'bg-green-600/50 opacity-50 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-green-600/70 to-teal-600/70 hover:from-green-500/90 hover:to-teal-500/90 shadow-[0_0_10px_rgba(16,185,129,0.2)]'
+              }`}
+            >
+              <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-green-600/50 to-teal-600/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+              <span className="relative z-10 flex items-center">
                 {loading.save ? (
                   <>
                     <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -798,140 +822,154 @@ export default defineConfig({
                     Saving...
                   </>
                 ) : 'Save Session'}
-              </button>
-            </div>
-          )}
-
-          {error && (
-            <div className={`text-${error.includes('successfully') ? 'green' : 'red'}-500 p-2 ${error.includes('successfully') ? 'bg-green-900/20' : 'bg-red-900/20'} rounded-lg flex items-center mt-4`}>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
-              {error}
-            </div>
-          )}
-        </div>
-
-        {Object.keys(files).length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-            {maximizedPanel !== 'preview' && (
-              <div className={`${maximizedPanel === 'code' ? 'md:col-span-3' : 'md:col-span-2'}`}>
-                <div className="bg-[#1a1a1d] p-4 rounded-2xl border border-[#2a2a2e] h-full">
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-lg font-semibold">📁 Files</h2>
-                    <button
-                      onClick={handleDownloadAll}
-                      className="text-sm text-purple-400 hover:underline"
-                      disabled={loading.generate || loading.modify}
-                    >
-                      Download All
-                    </button>
-                  </div>
-                  <ul className="space-y-2 max-h-[400px] overflow-y-auto">
-                    {Object.keys(files).map((file) => (
-                      <li
-                        key={file}
-                        className={`cursor-pointer px-3 py-1.5 rounded-lg hover:bg-[#2a2a2e] text-sm ${file === activeFile ? 'bg-[#2a2a2e] text-purple-400' : ''}`}
-                        onClick={() => setActiveFile(file)}
-                      >
-                        <div className="flex justify-between items-center">
-                          <span className="truncate">{file}</span>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleDownloadFile(file); }}
-                            className="text-xs text-gray-400 hover:text-purple-400 ml-2"
-                            disabled={loading.generate || loading.modify}
-                          >
-                            ⬇
-                          </button>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            )}
-
-            {maximizedPanel !== 'preview' && (
-              <div className={`${maximizedPanel === 'code' ? 'md:col-span-9' : 'md:col-span-6'}`}>
-                <div className="bg-[#1a1a1d] p-4 rounded-2xl border border-[#2a2a2e] h-full">
-                  <div className="flex justify-between items-center mb-2">
-                    <h2 className="text-lg font-semibold">📝 {activeFile}</h2>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => toggleMaximize('code')}
-                        className="text-gray-400 hover:text-white"
-                        title={maximizedPanel === 'code' ? 'Minimize' : 'Maximize'}
-                        disabled={loading.generate || loading.modify}
-                      >
-                        {maximizedPanel === 'code' ? '🗗' : '🗖'}
-                      </button>
-                      <button
-                        onClick={handleCopy}
-                        className="text-purple-400 text-sm hover:underline copy-button"
-                        disabled={loading.generate || loading.modify}
-                      >
-                        Copy Code
-                      </button>
-                    </div>
-                  </div>
-                  <textarea
-                    value={files[activeFile] || ''}
-                    onChange={(e) => handleFileChange(activeFile, e.target.value)}
-                    className="w-full h-[500px] bg-[#121214] text-green-400 p-4 rounded-lg border border-[#333] resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 font-mono text-sm"
-                    disabled={loading.modify}
-                  />
-                </div>
-              </div>
-            )}
-
-            {maximizedPanel !== 'code' && (
-              <div className={`${maximizedPanel === 'preview' ? 'md:col-span-12' : 'md:col-span-4'}`}>
-                <div className="bg-[#1a1a1d] p-4 rounded-2xl border border-[#2a2a2e] h-full">
-                  <div className="flex justify-between items-center mb-2">
-                    <h2 className="text-lg font-semibold">👀 Live Preview</h2>
-                    <button
-                      onClick={() => toggleMaximize('preview')}
-                      className="text-gray-400 hover:text-white"
-                      title={maximizedPanel === 'preview' ? 'Minimize' : 'Maximize'}
-                      disabled={loading.generate || loading.modify}
-                    >
-                      {maximizedPanel === 'preview' ? '🗗' : '🗖'}
-                    </button>
-                  </div>
-                  <div
-                    ref={previewRef}
-                    className="bg-white rounded-xl text-black overflow-auto min-h-[500px]"
-                  >
-                    <iframe
-                      srcDoc={`
-                        <!DOCTYPE html>
-                        <html>
-                          <head>
-                            <meta charset="UTF-8">
-                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                            <script src="https://cdn.tailwindcss.com"></script>
-                            <style>
-                              body { margin: 0; padding: 0; }
-                            </style>
-                          </head>
-                          <body>
-                            ${extractCode(files[activeFile] || '<div class="p-4 text-gray-500">No preview available</div>')}
-                          </body>
-                        </html>
-                      `}
-                      className="w-full h-[500px] border-0"
-                      title="Preview"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
+              </span>
+            </button>
           </div>
         )}
 
-        {Object.keys(files).length > 0 && (
-          <div className="mt-6">
-            <h2 className="text-lg font-semibold mb-4">👀 Sandpack Live Preview</h2>
+        {error && (
+          <div className={`text-${error.includes('successfully') ? 'green' : 'red'}-500 p-2 ${error.includes('successfully') ? 'bg-green-900/20' : 'bg-red-900/20'} rounded-lg flex items-center mt-4 border ${error.includes('successfully') ? 'border-green-500/30' : 'border-red-500/30'}`}>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+            {error}
+          </div>
+        )}
+      </div>
+
+      {Object.keys(files).length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+          {maximizedPanel !== 'preview' && (
+            <div className={`${maximizedPanel === 'code' ? 'md:col-span-3' : 'md:col-span-2'}`}>
+              <div className="bg-[#1a1a1d]/90 p-4 rounded-2xl border border-violet-500/30 backdrop-blur-sm h-full relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-violet-500/70 to-transparent"></div>
+                <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent"></div>
+                
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-semibold text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-cyan-400">📁 Files</h2>
+                  <button
+                    onClick={handleDownloadAll}
+                    className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors duration-200"
+                    disabled={loading.generate || loading.modify}
+                  >
+                    Download All
+                  </button>
+                </div>
+                <ul className="space-y-2 max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-violet-500/30 scrollbar-track-transparent">
+                  {Object.keys(files).map((file) => (
+                    <li
+                      key={file}
+                      className={`cursor-pointer px-3 py-1.5 rounded-lg hover:bg-violet-500/20 text-sm transition-colors duration-200 ${file === activeFile ? 'bg-violet-500/20 text-cyan-300 border-l-2 border-cyan-400' : ''}`}
+                      onClick={() => setActiveFile(file)}
+                    >
+                      <div className="flex justify-between items-center">
+                        <span className="truncate">{file}</span>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDownloadFile(file); }}
+                          className="text-xs text-gray-400 hover:text-cyan-400 ml-2 transition-colors duration-200"
+                          disabled={loading.generate || loading.modify}
+                        >
+                          ⬇
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {maximizedPanel !== 'preview' && (
+            <div className={`${maximizedPanel === 'code' ? 'md:col-span-9' : 'md:col-span-6'}`}>
+              <div className="bg-[#1a1a1d]/90 p-4 rounded-2xl border border-violet-500/30 backdrop-blur-sm h-full relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-violet-500/70 to-transparent"></div>
+                <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent"></div>
+                
+                <div className="flex justify-between items-center mb-2">
+                  <h2 className="text-lg font-semibold text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-cyan-400">📝 {activeFile}</h2>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => toggleMaximize('code')}
+                      className="text-gray-400 hover:text-cyan-300 transition-colors duration-200"
+                      title={maximizedPanel === 'code' ? 'Minimize' : 'Maximize'}
+                      disabled={loading.generate || loading.modify}
+                    >
+                      {maximizedPanel === 'code' ? '🗗' : '🗖'}
+                    </button>
+                    <button
+                      onClick={handleCopy}
+                      className="text-cyan-400 text-sm hover:text-cyan-300 transition-colors duration-200 copy-button"
+                      disabled={loading.generate || loading.modify}
+                    >
+                      Copy Code
+                    </button>
+                  </div>
+                </div>
+                <textarea
+                  value={files[activeFile] || ''}
+                  onChange={(e) => handleFileChange(activeFile, e.target.value)}
+                  className="w-full h-[500px] bg-black/40 text-green-400 p-4 rounded-lg border border-violet-500/30 resize-none focus:outline-none focus:ring-2 focus:ring-violet-500 font-mono text-sm"
+                  disabled={loading.modify}
+                />
+              </div>
+            </div>
+          )}
+
+          {maximizedPanel !== 'code' && (
+            <div className={`${maximizedPanel === 'preview' ? 'md:col-span-12' : 'md:col-span-4'}`}>
+              <div className="bg-[#1a1a1d]/90 p-4 rounded-2xl border border-violet-500/30 backdrop-blur-sm h-full relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-violet-500/70 to-transparent"></div>
+                <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent"></div>
+                
+                <div className="flex justify-between items-center mb-2">
+                  <h2 className="text-lg font-semibold text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-cyan-400">👀 Live Preview</h2>
+                  <button
+                    onClick={() => toggleMaximize('preview')}
+                    className="text-gray-400 hover:text-cyan-300 transition-colors duration-200"
+                    title={maximizedPanel === 'preview' ? 'Minimize' : 'Maximize'}
+                    disabled={loading.generate || loading.modify}
+                  >
+                    {maximizedPanel === 'preview' ? '🗗' : '🗖'}
+                  </button>
+                </div>
+                <div
+                  ref={previewRef}
+                  className="bg-white rounded-xl text-black overflow-auto min-h-[500px] border border-violet-500/30"
+                >
+                  <iframe
+                    srcDoc={`
+                      <!DOCTYPE html>
+                      <html>
+                        <head>
+                          <meta charset="UTF-8">
+                          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                          <script src="https://cdn.tailwindcss.com"></script>
+                          <style>
+                            body { margin: 0; padding: 0; }
+                          </style>
+                        </head>
+                        <body>
+                          ${extractCode(files[activeFile] || '<div class="p-4 text-gray-500">No preview available</div>')}
+                        </body>
+                      </html>
+                    `}
+                    className="w-full h-[500px] border-0"
+                    title="Preview"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {Object.keys(files).length > 0 && (
+        <div className="mt-6">
+          <h2 className="text-lg font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-cyan-400">👀 Sandpack Live Preview</h2>
+          <div className="rounded-xl overflow-hidden border border-violet-500/30 shadow-[0_0_15px_rgba(138,43,226,0.1)] relative">
+            <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-violet-500/70 to-transparent"></div>
+            <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent"></div>
+            
             <Sandpack
               files={files}
               theme="dark"
@@ -956,10 +994,41 @@ export default defineConfig({
               }}
             />
           </div>
-        )}
-      </div>
+        </div>
+      )}
+      
+      {/* Add CSS animations */}
+      <style jsx global>{`
+        @keyframes gradient {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        
+        .animate-gradient {
+          animation: gradient 8s ease infinite;
+        }
+        
+        .bg-300\% {
+          background-size: 300% 300%;
+        }
+        
+        /* Custom scrollbar */
+        .scrollbar-thin::-webkit-scrollbar {
+          width: 4px;
+        }
+        
+        .scrollbar-thin::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+          background-color: rgba(124, 58, 237, 0.3);
+          border-radius: 20px;
+        }
+      `}</style>
     </div>
-  );
-};
-
+  </div>
+);
+}
 export default CodeGenerator;
