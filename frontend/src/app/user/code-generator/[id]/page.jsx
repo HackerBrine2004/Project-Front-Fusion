@@ -37,6 +37,16 @@ const CodeGenerator = () => {
   const [hasGenerated, setHasGenerated] = useState(false);
   const [sessionName, setSessionName] = useState('');
   const [sessionId, setSessionId] = useState('');
+  const [previewTheme, setPreviewTheme] = useState('dark');
+  const [showColorPalette, setShowColorPalette] = useState(false);
+  const [customColors, setCustomColors] = useState({
+    background: '#0f172a',
+    text: '#e2e8f0',
+    border: '#334155',
+    primary: '#7c3aed',
+    secondary: '#4f46e5',
+    accent: '#06b6d4'
+  });
   const fileInputRef = useRef(null);
   const previewRef = useRef(null);
   const router = useRouter();
@@ -151,6 +161,240 @@ const CodeGenerator = () => {
     }
   };
 
+  const getThemeStyles = (theme) => {
+    switch (theme) {
+      case 'light':
+        return {
+          background: {
+            from: ['bg-gray-900', 'bg-slate-900', 'bg-zinc-900', 'bg-neutral-900', 'bg-stone-900'],
+            to: 'bg-white'
+          },
+          text: {
+            from: ['text-gray-100', 'text-slate-100', 'text-zinc-100', 'text-neutral-100', 'text-stone-100'],
+            to: 'text-gray-900'
+          },
+          border: {
+            from: ['border-gray-700', 'border-slate-700', 'border-zinc-700', 'border-neutral-700', 'border-stone-700'],
+            to: 'border-gray-200'
+          },
+          hover: {
+            from: ['hover:bg-gray-800', 'hover:bg-slate-800', 'hover:bg-zinc-800', 'hover:bg-neutral-800', 'hover:bg-stone-800'],
+            to: 'hover:bg-gray-50'
+          },
+          button: {
+            from: ['bg-violet-600', 'bg-indigo-600', 'bg-purple-600'],
+            to: 'bg-blue-600'
+          },
+          input: {
+            from: ['bg-gray-800', 'bg-slate-800', 'bg-zinc-800', 'bg-neutral-800', 'bg-stone-800'],
+            to: 'bg-white'
+          },
+          heading: {
+            from: ['text-violet-400', 'text-indigo-400', 'text-purple-400'],
+            to: 'text-blue-600'
+          },
+          card: {
+            from: ['bg-gray-800', 'bg-slate-800', 'bg-zinc-800', 'bg-neutral-800', 'bg-stone-800'],
+            to: 'bg-gray-50'
+          }
+        };
+      case 'dark':
+        return {
+          background: {
+            from: ['bg-white', 'bg-slate-50', 'bg-zinc-50', 'bg-neutral-50', 'bg-stone-50'],
+            to: 'bg-gray-900'
+          },
+          text: {
+            from: ['text-gray-900', 'text-slate-900', 'text-zinc-900', 'text-neutral-900', 'text-stone-900'],
+            to: 'text-gray-100'
+          },
+          border: {
+            from: ['border-gray-200', 'border-slate-200', 'border-zinc-200', 'border-neutral-200', 'border-stone-200'],
+            to: 'border-gray-700'
+          },
+          hover: {
+            from: ['hover:bg-gray-50', 'hover:bg-slate-50', 'hover:bg-zinc-50', 'hover:bg-neutral-50', 'hover:bg-stone-50'],
+            to: 'hover:bg-gray-800'
+          },
+          button: {
+            from: ['bg-blue-600', 'bg-indigo-600', 'bg-sky-600'],
+            to: 'bg-violet-600'
+          },
+          input: {
+            from: ['bg-white', 'bg-slate-50', 'bg-zinc-50', 'bg-neutral-50', 'bg-stone-50'],
+            to: 'bg-gray-800'
+          },
+          heading: {
+            from: ['text-blue-600', 'text-indigo-600', 'text-sky-600'],
+            to: 'text-violet-400'
+          },
+          card: {
+            from: ['bg-gray-50', 'bg-slate-50', 'bg-zinc-50', 'bg-neutral-50', 'bg-stone-50'],
+            to: 'bg-gray-800'
+          }
+        };
+      case 'custom':
+        const getTailwindColor = (hex) => {
+          const colorMap = {
+            '#0f172a': 'slate-900',
+            '#1e293b': 'slate-800',
+            '#334155': 'slate-700',
+            '#475569': 'slate-600',
+            '#64748b': 'slate-500',
+            '#94a3b8': 'slate-400',
+            '#cbd5e1': 'slate-300',
+            '#e2e8f0': 'slate-200',
+            '#f1f5f9': 'slate-100',
+            '#f8fafc': 'slate-50',
+            '#7c3aed': 'violet-600',
+            '#6d28d9': 'violet-700',
+            '#4f46e5': 'indigo-600',
+            '#4338ca': 'indigo-700',
+            '#06b6d4': 'cyan-500',
+            '#0891b2': 'cyan-600',
+          };
+          return colorMap[hex.toLowerCase()] || 'gray-500';
+        };
+
+        return {
+          background: {
+            from: ['bg-white', 'bg-gray-900', 'bg-slate-900', 'bg-zinc-900', 'bg-neutral-900', 'bg-stone-900'],
+            to: `bg-${getTailwindColor(customColors.background)}`
+          },
+          text: {
+            from: ['text-gray-900', 'text-gray-100', 'text-slate-100', 'text-zinc-100', 'text-neutral-100', 'text-stone-100'],
+            to: `text-${getTailwindColor(customColors.text)}`
+          },
+          border: {
+            from: ['border-gray-200', 'border-gray-700', 'border-slate-700', 'border-zinc-700', 'border-neutral-700', 'border-stone-700'],
+            to: `border-${getTailwindColor(customColors.border)}`
+          },
+          hover: {
+            from: ['hover:bg-gray-50', 'hover:bg-gray-800', 'hover:bg-slate-800', 'hover:bg-zinc-800', 'hover:bg-neutral-800', 'hover:bg-stone-800'],
+            to: `hover:bg-${getTailwindColor(customColors.background)}/80`
+          },
+          button: {
+            from: ['bg-blue-600', 'bg-violet-600', 'bg-indigo-600', 'bg-purple-600'],
+            to: `bg-${getTailwindColor(customColors.primary)}`
+          },
+          input: {
+            from: ['bg-white', 'bg-gray-800', 'bg-slate-800', 'bg-zinc-800', 'bg-neutral-800', 'bg-stone-800'],
+            to: `bg-${getTailwindColor(customColors.background)}`
+          },
+          heading: {
+            from: ['text-blue-600', 'text-violet-600', 'text-indigo-600', 'text-purple-600'],
+            to: `text-${getTailwindColor(customColors.primary)}`
+          },
+          card: {
+            from: ['bg-gray-50', 'bg-gray-800', 'bg-slate-800', 'bg-zinc-800', 'bg-neutral-800', 'bg-stone-800'],
+            to: `bg-${getTailwindColor(customColors.background)}`
+          }
+        };
+      default:
+        return {
+          background: {
+            from: ['bg-white', 'bg-slate-50', 'bg-zinc-50', 'bg-neutral-50', 'bg-stone-50'],
+            to: 'bg-gray-900'
+          },
+          text: {
+            from: ['text-gray-900', 'text-slate-900', 'text-zinc-900', 'text-neutral-900', 'text-stone-900'],
+            to: 'text-gray-100'
+          },
+          border: {
+            from: ['border-gray-200', 'border-slate-200', 'border-zinc-200', 'border-neutral-200', 'border-stone-200'],
+            to: 'border-gray-700'
+          },
+          hover: {
+            from: ['hover:bg-gray-50', 'hover:bg-slate-50', 'hover:bg-zinc-50', 'hover:bg-neutral-50', 'hover:bg-stone-50'],
+            to: 'hover:bg-gray-800'
+          },
+          button: {
+            from: ['bg-blue-600', 'bg-indigo-600', 'bg-sky-600'],
+            to: 'bg-violet-600'
+          },
+          input: {
+            from: ['bg-white', 'bg-slate-50', 'bg-zinc-50', 'bg-neutral-50', 'bg-stone-50'],
+            to: 'bg-gray-800'
+          },
+          heading: {
+            from: ['text-blue-600', 'text-indigo-600', 'text-sky-600'],
+            to: 'text-violet-400'
+          },
+          card: {
+            from: ['bg-gray-50', 'bg-slate-50', 'bg-zinc-50', 'bg-neutral-50', 'bg-stone-50'],
+            to: 'bg-gray-800'
+          }
+        };
+    }
+  };
+
+  const applyThemeToCode = (code, theme) => {
+    if (!code) return '';
+    
+    const getTailwindColor = (hex) => {
+      const colorMap = {
+        '#0f172a': 'slate-900',
+        '#1e293b': 'slate-800',
+        '#334155': 'slate-700',
+        '#475569': 'slate-600',
+        '#64748b': 'slate-500',
+        '#94a3b8': 'slate-400',
+        '#cbd5e1': 'slate-300',
+        '#e2e8f0': 'slate-200',
+        '#f1f5f9': 'slate-100',
+        '#f8fafc': 'slate-50',
+        '#7c3aed': 'violet-600',
+        '#6d28d9': 'violet-700',
+        '#4f46e5': 'indigo-600',
+        '#4338ca': 'indigo-700',
+        '#06b6d4': 'cyan-500',
+        '#0891b2': 'cyan-600',
+      };
+      return colorMap[hex.toLowerCase()] || 'gray-500';
+    };
+
+    let themedCode = code;
+
+    if (theme === 'light') {
+      // Light theme replacements
+      themedCode = themedCode
+        .replace(/bg-(?:gray|slate|zinc|neutral|stone)-900/g, 'bg-white')
+        .replace(/text-(?:gray|slate|zinc|neutral|stone)-100/g, 'text-gray-900')
+        .replace(/border-(?:gray|slate|zinc|neutral|stone)-700/g, 'border-gray-200')
+        .replace(/hover:bg-(?:gray|slate|zinc|neutral|stone)-800/g, 'hover:bg-gray-50')
+        .replace(/bg-(?:violet|indigo|purple)-600/g, 'bg-blue-600')
+        .replace(/bg-(?:gray|slate|zinc|neutral|stone)-800/g, 'bg-white')
+        .replace(/text-(?:violet|indigo|purple)-400/g, 'text-blue-600')
+        .replace(/bg-(?:gray|slate|zinc|neutral|stone)-800/g, 'bg-gray-50');
+    } else if (theme === 'dark') {
+      // Dark theme replacements
+      themedCode = themedCode
+        .replace(/bg-white|bg-(?:slate|zinc|neutral|stone)-50/g, 'bg-gray-900')
+        .replace(/text-(?:gray|slate|zinc|neutral|stone)-900/g, 'text-gray-100')
+        .replace(/border-(?:gray|slate|zinc|neutral|stone)-200/g, 'border-gray-700')
+        .replace(/hover:bg-(?:gray|slate|zinc|neutral|stone)-50/g, 'hover:bg-gray-800')
+        .replace(/bg-(?:blue|indigo|sky)-600/g, 'bg-violet-600')
+        .replace(/bg-white|bg-(?:slate|zinc|neutral|stone)-50/g, 'bg-gray-800')
+        .replace(/text-(?:blue|indigo|sky)-600/g, 'text-violet-400')
+        .replace(/bg-(?:gray|slate|zinc|neutral|stone)-50/g, 'bg-gray-800');
+    } else if (theme === 'custom') {
+      // Custom theme replacements
+      themedCode = themedCode
+        .replace(/bg-(?:white|gray|slate|zinc|neutral|stone)-(?:50|800|900)/g, `bg-${getTailwindColor(customColors.background)}`)
+        .replace(/text-(?:gray|slate|zinc|neutral|stone)-(?:100|900)/g, `text-${getTailwindColor(customColors.text)}`)
+        .replace(/border-(?:gray|slate|zinc|neutral|stone)-(?:200|700)/g, `border-${getTailwindColor(customColors.border)}`)
+        .replace(/hover:bg-(?:gray|slate|zinc|neutral|stone)-(?:50|800)/g, `hover:bg-${getTailwindColor(customColors.background)}/80`)
+        .replace(/bg-(?:blue|violet|indigo|purple|cyan)-600/g, `bg-${getTailwindColor(customColors.primary)}`)
+        .replace(/text-(?:blue|violet|indigo|purple|cyan)-(?:400|600)/g, `text-${getTailwindColor(customColors.primary)}`)
+        .replace(/focus:ring-(?:blue|violet|indigo|purple|cyan)-[^"'\s]+/g, `focus:ring-${getTailwindColor(customColors.accent)}`)
+        .replace(/focus:border-(?:blue|violet|indigo|purple|cyan)-[^"'\s]+/g, `focus:border-${getTailwindColor(customColors.accent)}`)
+        .replace(/hover:bg-(?:blue|violet|indigo|purple|cyan)-[^"'\s]+/g, `hover:bg-${getTailwindColor(customColors.secondary)}`)
+        .replace(/hover:text-(?:blue|violet|indigo|purple|cyan)-[^"'\s]+/g, `hover:text-${getTailwindColor(customColors.primary)}`);
+    }
+
+    return themedCode;
+  };
+
   const handleGenerate = async () => {
     setHasGenerated(true);
     setError('');
@@ -184,6 +428,12 @@ const CodeGenerator = () => {
       const cleanedResult = extractCode(data.result || 'No code generated.');
       const fileData = data.files || { 'index.html': cleanedResult };
 
+      // Apply theme to the generated code
+      const themedFileData = {};
+      Object.entries(fileData).forEach(([fileName, content]) => {
+        themedFileData[fileName] = applyThemeToCode(content, previewTheme);
+      });
+
       // Add necessary React files if framework is React
       if (framework === 'react' || framework === 'both') {
         const reactFiles = {
@@ -197,7 +447,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <App />
   </React.StrictMode>
 )`,
-          'src/App.jsx': cleanedResult,
+          'src/App.jsx': themedFileData['index.html'],
           'src/index.css': `@tailwind base;
 @tailwind components;
 @tailwind utilities;`,
@@ -256,10 +506,10 @@ export default defineConfig({
         };
         setFiles(prev => ({ ...prev, ...reactFiles }));
       } else {
-        setFiles(fileData);
+        setFiles(themedFileData);
       }
 
-      setActiveFile(Object.keys(fileData)[0] || '');
+      setActiveFile(Object.keys(themedFileData)[0] || '');
 
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
@@ -546,6 +796,244 @@ export default defineConfig({
     } finally {
       setLoading(prev => ({ ...prev, update: false }));
     }
+  };
+
+  // Add theme change handler
+  const handleThemeChange = async (newTheme) => {
+    setPreviewTheme(newTheme);
+    
+    if (newTheme === 'custom') {
+      setShowColorPalette(true);
+      return;
+    }
+
+    if (!activeFile || !files[activeFile]) {
+      return;
+    }
+
+    setLoading(prev => ({ ...prev, modify: true }));
+    setError('');
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/code/modify-code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: files[activeFile],
+          instructions: `Change the theme to ${newTheme} theme. Apply appropriate background colors, text colors, border colors, and interactive element colors for a ${newTheme} theme.`,
+          framework: framework
+        }),
+      });
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType?.includes('application/json')) {
+        const text = await response.text();
+        throw new Error(text.startsWith('<') ? 'Server error occurred' : text);
+      }
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to apply theme');
+      }
+
+      const modifiedCode = extractCode(data.result || 'No modified code generated.');
+      setFiles(prev => ({ ...prev, [activeFile]: modifiedCode }));
+    } catch (err) {
+      setError(err.message.includes('<!DOCTYPE') ? 'Server error occurred' : err.message);
+      console.error("Theme change error:", err);
+    } finally {
+      setLoading(prev => ({ ...prev, modify: false }));
+    }
+  };
+
+  // Add color palette modal component
+  const ColorPaletteModal = () => {
+    if (!showColorPalette) return null;
+
+    const colorSections = [
+      {
+        title: "Main Colors",
+        description: "Primary colors used throughout the UI",
+        colors: [
+          {
+            label: "Background",
+            description: "Main background color for the page",
+            value: customColors.background,
+            onChange: (value) => setCustomColors(prev => ({ ...prev, background: value }))
+          },
+          {
+            label: "Text",
+            description: "Primary text color",
+            value: customColors.text,
+            onChange: (value) => setCustomColors(prev => ({ ...prev, text: value }))
+          },
+          {
+            label: "Border",
+            description: "Color for borders and dividers",
+            value: customColors.border,
+            onChange: (value) => setCustomColors(prev => ({ ...prev, border: value }))
+          }
+        ]
+      },
+      {
+        title: "Interactive Elements",
+        description: "Colors for buttons and interactive components",
+        colors: [
+          {
+            label: "Primary Button",
+            description: "Main action buttons and primary elements",
+            value: customColors.primary,
+            onChange: (value) => setCustomColors(prev => ({ ...prev, primary: value }))
+          },
+          {
+            label: "Secondary Button",
+            description: "Secondary actions and hover states",
+            value: customColors.secondary,
+            onChange: (value) => setCustomColors(prev => ({ ...prev, secondary: value }))
+          },
+          {
+            label: "Accent",
+            description: "Focus states and highlights",
+            value: customColors.accent,
+            onChange: (value) => setCustomColors(prev => ({ ...prev, accent: value }))
+          }
+        ]
+      }
+    ];
+
+    return (
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+        <div className="bg-[#1a1a1d] p-6 rounded-2xl border border-violet-500/30 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h3 className="text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-cyan-400">
+                Custom Theme Colors
+              </h3>
+              <p className="text-sm text-gray-400 mt-1">
+                Customize colors for different UI elements
+              </p>
+            </div>
+            <button
+              onClick={() => setShowColorPalette(false)}
+              className="text-gray-400 hover:text-white transition-colors"
+            >
+              ✕
+            </button>
+          </div>
+          
+          <div className="space-y-6">
+            {colorSections.map((section, index) => (
+              <div key={index} className="bg-black/40 rounded-xl p-4 border border-violet-500/20">
+                <div className="mb-4">
+                  <h4 className="text-lg font-medium text-violet-300">{section.title}</h4>
+                  <p className="text-sm text-gray-400">{section.description}</p>
+                </div>
+                
+                <div className="space-y-4">
+                  {section.colors.map((color, colorIndex) => (
+                    <div key={colorIndex} className="flex flex-col gap-2">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300">{color.label}</label>
+                          <p className="text-xs text-gray-400">{color.description}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="color"
+                            value={color.value}
+                            onChange={(e) => color.onChange(e.target.value)}
+                            className="w-10 h-10 rounded-lg cursor-pointer border border-violet-500/30"
+                          />
+                          <input
+                            type="text"
+                            value={color.value}
+                            onChange={(e) => color.onChange(e.target.value)}
+                            className="w-24 bg-black/40 text-white p-2 rounded-lg border border-violet-500/30 text-sm"
+                          />
+                        </div>
+                      </div>
+                      <div className="h-1 rounded-full overflow-hidden bg-black/40">
+                        <div 
+                          className="h-full" 
+                          style={{ 
+                            width: '100%', 
+                            background: `linear-gradient(to right, ${color.value}, ${color.value}80)`
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-6 flex justify-end gap-3">
+            <button
+              onClick={() => setShowColorPalette(false)}
+              className="px-4 py-2 text-gray-300 hover:text-white transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={async () => {
+                if (!activeFile || !files[activeFile]) {
+                  setShowColorPalette(false);
+                  return;
+                }
+
+                setLoading(prev => ({ ...prev, modify: true }));
+                setError('');
+
+                try {
+                  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/code/modify-code`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      code: files[activeFile],
+                      instructions: `Apply a custom theme with the following colors:
+                        - Background: ${customColors.background}
+                        - Text: ${customColors.text}
+                        - Border: ${customColors.border}
+                        - Primary: ${customColors.primary}
+                        - Secondary: ${customColors.secondary}
+                        - Accent: ${customColors.accent}
+                        Update all relevant Tailwind classes to match this color scheme.`,
+                      framework: framework
+                    }),
+                  });
+
+                  const contentType = response.headers.get('content-type');
+                  if (!contentType?.includes('application/json')) {
+                    const text = await response.text();
+                    throw new Error(text.startsWith('<') ? 'Server error occurred' : text);
+                  }
+
+                  const data = await response.json();
+
+                  if (!response.ok) {
+                    throw new Error(data.error || 'Failed to apply custom theme');
+                  }
+
+                  const modifiedCode = extractCode(data.result || 'No modified code generated.');
+                  setFiles(prev => ({ ...prev, [activeFile]: modifiedCode }));
+                  setShowColorPalette(false);
+                } catch (err) {
+                  setError(err.message.includes('<!DOCTYPE') ? 'Server error occurred' : err.message);
+                  console.error("Custom theme error:", err);
+                } finally {
+                  setLoading(prev => ({ ...prev, modify: false }));
+                }
+              }}
+              className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors"
+            >
+              Apply Colors
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -923,14 +1411,44 @@ export default defineConfig({
                 
                 <div className="flex justify-between items-center mb-2">
                   <h2 className="text-lg font-semibold text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-cyan-400">👀 Live Preview</h2>
-                  <button
-                    onClick={() => toggleMaximize('preview')}
-                    className="text-gray-400 hover:text-cyan-300 transition-colors duration-200"
-                    title={maximizedPanel === 'preview' ? 'Minimize' : 'Maximize'}
-                    disabled={loading.generate || loading.modify}
-                  >
-                    {maximizedPanel === 'preview' ? '🗗' : '🗖'}
-                  </button>
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <select
+                        value={previewTheme}
+                        onChange={(e) => {
+                          const newTheme = e.target.value;
+                          if (newTheme === 'custom') {
+                            setShowColorPalette(true);
+                          } else {
+                            handleThemeChange(newTheme);
+                          }
+                        }}
+                        className="appearance-none bg-black/40 text-white border border-violet-500/30 rounded-lg px-4 py-2 pl-8 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 cursor-pointer"
+                      >
+                        <option value="dark">Dark Theme</option>
+                        <option value="light">Light Theme</option>
+                        <option value="custom">Custom Theme</option>
+                      </select>
+                      <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                        <svg className="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                        </svg>
+                      </div>
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                        <svg className="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => toggleMaximize('preview')}
+                      className="text-gray-400 hover:text-cyan-300 transition-colors duration-200"
+                      title={maximizedPanel === 'preview' ? 'Minimize' : 'Maximize'}
+                      disabled={loading.generate || loading.modify}
+                    >
+                      {maximizedPanel === 'preview' ? '🗗' : '🗖'}
+                    </button>
+                  </div>
                 </div>
                 <div
                   ref={previewRef}
@@ -945,7 +1463,15 @@ export default defineConfig({
                           <meta name="viewport" content="width=device-width, initial-scale=1.0">
                           <script src="https://cdn.tailwindcss.com"></script>
                           <style>
-                            body { margin: 0; padding: 0; }
+                            body { 
+                              margin: 0; 
+                              padding: 0; 
+                              background-color: ${getThemeStyles(previewTheme).background};
+                              color: ${getThemeStyles(previewTheme).text};
+                            }
+                            * {
+                              border-color: ${getThemeStyles(previewTheme).border};
+                            }
                           </style>
                         </head>
                         <body>
@@ -962,6 +1488,7 @@ export default defineConfig({
           )}
         </div>
       )}
+      
 
       {Object.keys(files).length > 0 && (
         <div className="mt-6">
@@ -969,6 +1496,7 @@ export default defineConfig({
           <div className="rounded-xl overflow-hidden border border-violet-500/30 shadow-[0_0_15px_rgba(138,43,226,0.1)] relative">
             <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-violet-500/70 to-transparent"></div>
             <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent"></div>
+            
             
             <Sandpack
               files={files}
@@ -1027,6 +1555,9 @@ export default defineConfig({
           border-radius: 20px;
         }
       `}</style>
+
+      {/* Add the ColorPaletteModal component */}
+      <ColorPaletteModal />
     </div>
   </div>
 );
