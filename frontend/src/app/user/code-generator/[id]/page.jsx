@@ -863,6 +863,9 @@ export default defineConfig({
         return;
       }
 
+      // Close modal immediately
+      setShowColorPalette(false);
+      
       setLoading(prev => ({ ...prev, modify: true }));
       setError('');
 
@@ -879,6 +882,14 @@ export default defineConfig({
               - Primary: ${customColors.primary}
               - Secondary: ${customColors.secondary}
               - Accent: ${customColors.accent}
+              - Hero Title: ${customColors.heroTitle}
+              - Hero Subtitle: ${customColors.heroSubtitle}
+              - Card Background: ${customColors.cardBg}
+              - Card Border: ${customColors.cardBorder}
+              - Button Text: ${customColors.buttonText}
+              - Input Background: ${customColors.inputBg}
+              - Input Border: ${customColors.inputBorder}
+              - Input Text: ${customColors.inputText}
               Update all relevant Tailwind classes to match this color scheme.`,
             framework: framework
           }),
@@ -898,7 +909,10 @@ export default defineConfig({
 
         const modifiedCode = extractCode(data.result || 'No modified code generated.');
         setFiles(prev => ({ ...prev, [activeFile]: modifiedCode }));
-        setShowColorPalette(false);
+        
+        // Show success message
+        setError('Theme applied successfully!');
+        setTimeout(() => setError(''), 3000);
       } catch (err) {
         setError(err.message.includes('<!DOCTYPE') ? 'Server error occurred' : err.message);
         console.error("Custom theme error:", err);
@@ -933,6 +947,24 @@ export default defineConfig({
         ]
       },
       {
+        title: "Hero Section",
+        description: "Colors for the hero section elements",
+        colors: [
+          {
+            label: "Hero Title",
+            description: "Main heading in hero section",
+            value: customColors.heroTitle || customColors.primary,
+            onChange: (value) => setCustomColors(prev => ({ ...prev, heroTitle: value }))
+          },
+          {
+            label: "Hero Subtitle",
+            description: "Subtitle text in hero section",
+            value: customColors.heroSubtitle || customColors.text,
+            onChange: (value) => setCustomColors(prev => ({ ...prev, heroSubtitle: value }))
+          }
+        ]
+      },
+      {
         title: "Interactive Elements",
         description: "Colors for buttons and interactive components",
         colors: [
@@ -941,6 +973,12 @@ export default defineConfig({
             description: "Main action buttons and primary elements",
             value: customColors.primary,
             onChange: (value) => setCustomColors(prev => ({ ...prev, primary: value }))
+          },
+          {
+            label: "Button Text",
+            description: "Text color for buttons",
+            value: customColors.buttonText || '#ffffff',
+            onChange: (value) => setCustomColors(prev => ({ ...prev, buttonText: value }))
           },
           {
             label: "Secondary Button",
@@ -953,6 +991,48 @@ export default defineConfig({
             description: "Focus states and highlights",
             value: customColors.accent,
             onChange: (value) => setCustomColors(prev => ({ ...prev, accent: value }))
+          }
+        ]
+      },
+      {
+        title: "Cards & Containers",
+        description: "Colors for card components and containers",
+        colors: [
+          {
+            label: "Card Background",
+            description: "Background color for cards",
+            value: customColors.cardBg || customColors.background,
+            onChange: (value) => setCustomColors(prev => ({ ...prev, cardBg: value }))
+          },
+          {
+            label: "Card Border",
+            description: "Border color for cards",
+            value: customColors.cardBorder || customColors.border,
+            onChange: (value) => setCustomColors(prev => ({ ...prev, cardBorder: value }))
+          }
+        ]
+      },
+      {
+        title: "Form Elements",
+        description: "Colors for input fields and form elements",
+        colors: [
+          {
+            label: "Input Background",
+            description: "Background color for input fields",
+            value: customColors.inputBg || customColors.background,
+            onChange: (value) => setCustomColors(prev => ({ ...prev, inputBg: value }))
+          },
+          {
+            label: "Input Border",
+            description: "Border color for input fields",
+            value: customColors.inputBorder || customColors.border,
+            onChange: (value) => setCustomColors(prev => ({ ...prev, inputBorder: value }))
+          },
+          {
+            label: "Input Text",
+            description: "Text color for input fields",
+            value: customColors.inputText || customColors.text,
+            onChange: (value) => setCustomColors(prev => ({ ...prev, inputText: value }))
           }
         ]
       }
