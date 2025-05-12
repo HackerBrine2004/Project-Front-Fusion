@@ -37,7 +37,7 @@ const CodeGenerator = () => {
   const [hasGenerated, setHasGenerated] = useState(false);
   const [sessionName, setSessionName] = useState('');
   const [sessionId, setSessionId] = useState('');
-  const [previewTheme, setPreviewTheme] = useState('dark');
+  const [previewTheme, setPreviewTheme] = useState('');
   const [showColorPalette, setShowColorPalette] = useState(false);
   const [customColors, setCustomColors] = useState({
     background: '#0f172a',
@@ -851,6 +851,62 @@ export default defineConfig({
   const ColorPaletteModal = () => {
     if (!showColorPalette) return null;
 
+    const handleBackdropClick = (e) => {
+      if (e.target === e.currentTarget) {
+        setShowColorPalette(false);
+      }
+    };
+
+    const handleApplyColors = async () => {
+      if (!activeFile || !files[activeFile]) {
+        setShowColorPalette(false);
+        return;
+      }
+
+      setLoading(prev => ({ ...prev, modify: true }));
+      setError('');
+
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/code/modify-code`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            code: files[activeFile],
+            instructions: `Apply a custom theme with the following colors:
+              - Background: ${customColors.background}
+              - Text: ${customColors.text}
+              - Border: ${customColors.border}
+              - Primary: ${customColors.primary}
+              - Secondary: ${customColors.secondary}
+              - Accent: ${customColors.accent}
+              Update all relevant Tailwind classes to match this color scheme.`,
+            framework: framework
+          }),
+        });
+
+        const contentType = response.headers.get('content-type');
+        if (!contentType?.includes('application/json')) {
+          const text = await response.text();
+          throw new Error(text.startsWith('<') ? 'Server error occurred' : text);
+        }
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to apply custom theme');
+        }
+
+        const modifiedCode = extractCode(data.result || 'No modified code generated.');
+        setFiles(prev => ({ ...prev, [activeFile]: modifiedCode }));
+        setShowColorPalette(false);
+      } catch (err) {
+        setError(err.message.includes('<!DOCTYPE') ? 'Server error occurred' : err.message);
+        console.error("Custom theme error:", err);
+      } finally {
+        setLoading(prev => ({ ...prev, modify: false }));
+      }
+    };
+
     const colorSections = [
       {
         title: "Main Colors",
@@ -903,8 +959,14 @@ export default defineConfig({
     ];
 
     return (
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-        <div className="bg-[#1a1a1d] p-6 rounded-2xl border border-violet-500/30 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div 
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
+        onClick={handleBackdropClick}
+      >
+        <div 
+          className="bg-[#1a1a1d] p-6 rounded-2xl border border-violet-500/30 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+          onClick={e => e.stopPropagation()}
+        >
           <div className="flex justify-between items-center mb-6">
             <div>
               <h3 className="text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-cyan-400">
@@ -977,58 +1039,13 @@ export default defineConfig({
               Cancel
             </button>
             <button
-              onClick={async () => {
-                if (!activeFile || !files[activeFile]) {
-                  setShowColorPalette(false);
-                  return;
-                }
-
-                setLoading(prev => ({ ...prev, modify: true }));
-                setError('');
-
-                try {
-                  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/code/modify-code`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      code: files[activeFile],
-                      instructions: `Apply a custom theme with the following colors:
-                        - Background: ${customColors.background}
-                        - Text: ${customColors.text}
-                        - Border: ${customColors.border}
-                        - Primary: ${customColors.primary}
-                        - Secondary: ${customColors.secondary}
-                        - Accent: ${customColors.accent}
-                        Update all relevant Tailwind classes to match this color scheme.`,
-                      framework: framework
-                    }),
-                  });
-
-                  const contentType = response.headers.get('content-type');
-                  if (!contentType?.includes('application/json')) {
-                    const text = await response.text();
-                    throw new Error(text.startsWith('<') ? 'Server error occurred' : text);
-                  }
-
-                  const data = await response.json();
-
-                  if (!response.ok) {
-                    throw new Error(data.error || 'Failed to apply custom theme');
-                  }
-
-                  const modifiedCode = extractCode(data.result || 'No modified code generated.');
-                  setFiles(prev => ({ ...prev, [activeFile]: modifiedCode }));
-                  setShowColorPalette(false);
-                } catch (err) {
-                  setError(err.message.includes('<!DOCTYPE') ? 'Server error occurred' : err.message);
-                  console.error("Custom theme error:", err);
-                } finally {
-                  setLoading(prev => ({ ...prev, modify: false }));
-                }
-              }}
-              className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors"
+              onClick={handleApplyColors}
+              disabled={loading.modify}
+              className={`px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors ${
+                loading.modify ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
             >
-              Apply Colors
+              {loading.modify ? 'Applying...' : 'Apply Colors'}
             </button>
           </div>
         </div>
@@ -1423,19 +1440,23 @@ export default defineConfig({
                             handleThemeChange(newTheme);
                           }
                         }}
-                        className="appearance-none bg-black/40 text-white border border-violet-500/30 rounded-lg px-4 py-2 pl-8 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 cursor-pointer"
+                        disabled={loading.modify}
+                        className={`appearance-none bg-black/40 text-white border border-violet-500/30 rounded-lg px-4 py-2 pl-8 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 cursor-pointer ${
+                          loading.modify ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
                       >
+                        <option value="" disabled>Select a theme</option>
                         <option value="dark">Dark Theme</option>
                         <option value="light">Light Theme</option>
                         <option value="custom">Custom Theme</option>
                       </select>
                       <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                        <svg className="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className={`w-4 h-4 ${loading.modify ? 'text-violet-400/50' : 'text-violet-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
                         </svg>
                       </div>
                       <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                        <svg className="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className={`w-4 h-4 ${loading.modify ? 'text-violet-400/50' : 'text-violet-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                         </svg>
                       </div>
@@ -1452,8 +1473,19 @@ export default defineConfig({
                 </div>
                 <div
                   ref={previewRef}
-                  className="bg-white rounded-xl text-black overflow-auto min-h-[500px] border border-violet-500/30"
+                  className="bg-white rounded-xl text-black overflow-auto min-h-[500px] border border-violet-500/30 relative"
                 >
+                  {loading.modify && (
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-10">
+                      <div className="flex flex-col items-center gap-3">
+                        <svg className="animate-spin h-8 w-8 text-violet-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span className="text-white font-medium">Applying Theme...</span>
+                      </div>
+                    </div>
+                  )}
                   <iframe
                     srcDoc={`
                       <!DOCTYPE html>
@@ -1466,11 +1498,11 @@ export default defineConfig({
                             body { 
                               margin: 0; 
                               padding: 0; 
-                              background-color: ${getThemeStyles(previewTheme).background};
-                              color: ${getThemeStyles(previewTheme).text};
+                              background-color: ${previewTheme ? getThemeStyles(previewTheme).background : '#ffffff'};
+                              color: ${previewTheme ? getThemeStyles(previewTheme).text : '#000000'};
                             }
                             * {
-                              border-color: ${getThemeStyles(previewTheme).border};
+                              border-color: ${previewTheme ? getThemeStyles(previewTheme).border : '#e5e7eb'};
                             }
                           </style>
                         </head>
