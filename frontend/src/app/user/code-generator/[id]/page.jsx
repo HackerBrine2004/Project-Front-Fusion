@@ -964,7 +964,7 @@ export default defineConfig({
         onClick={handleBackdropClick}
       >
         <div 
-          className="bg-[#1a1a1d] p-6 rounded-2xl border border-violet-500/30 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+          className="bg-[#1a1a1d] p-6 rounded-2xl border border-violet-500/30 w-full max-w-4xl max-h-[90vh] overflow-y-auto"
           onClick={e => e.stopPropagation()}
         >
           <div className="flex justify-between items-center mb-6">
@@ -1139,7 +1139,7 @@ export default defineConfig({
     <div className="fixed top-1/4 -left-32 w-64 h-64 rounded-full bg-violet-600/20 blur-3xl"></div>
     <div className="fixed bottom-1/4 -right-32 w-64 h-64 rounded-full bg-cyan-600/20 blur-3xl"></div>
 
-    <div className="mt-15 max-w-7xl mx-auto relative z-10">
+    <div className="mt-15 max-w-[95%] mx-auto relative z-10">
       <div className="flex justify-between items-center mb-10">
         <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-cyan-300 to-violet-400 animate-gradient bg-300%">⚡ Front-Fusion UI Generator</h1>
         <div className="flex gap-4">
@@ -1354,27 +1354,34 @@ export default defineConfig({
                   <h2 className="text-lg font-semibold text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-cyan-400">📁 Files</h2>
                   <button
                     onClick={handleDownloadAll}
-                    className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors duration-200"
+                    className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors duration-200 flex items-center gap-1"
                     disabled={loading.generate || loading.modify}
                   >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
                     Download All
                   </button>
                 </div>
-                <ul className="space-y-2 max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-violet-500/30 scrollbar-track-transparent">
+                <ul className="space-y-2 max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-violet-500/30 scrollbar-track-transparent pr-2">
                   {Object.keys(files).map((file) => (
                     <li
                       key={file}
-                      className={`cursor-pointer px-3 py-1.5 rounded-lg hover:bg-violet-500/20 text-sm transition-colors duration-200 ${file === activeFile ? 'bg-violet-500/20 text-cyan-300 border-l-2 border-cyan-400' : ''}`}
+                      className={`cursor-pointer px-3 py-2 rounded-lg hover:bg-violet-500/20 text-sm transition-colors duration-200 ${
+                        file === activeFile ? 'bg-violet-500/20 text-cyan-300 border-l-2 border-cyan-400' : ''
+                      }`}
                       onClick={() => setActiveFile(file)}
                     >
                       <div className="flex justify-between items-center">
-                        <span className="truncate">{file}</span>
+                        <span className="truncate flex-1">{file}</span>
                         <button
                           onClick={(e) => { e.stopPropagation(); handleDownloadFile(file); }}
-                          className="text-xs text-gray-400 hover:text-cyan-400 ml-2 transition-colors duration-200"
+                          className="text-xs text-gray-400 hover:text-cyan-400 ml-2 transition-colors duration-200 flex items-center gap-1"
                           disabled={loading.generate || loading.modify}
                         >
-                          ⬇
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                          </svg>
                         </button>
                       </div>
                     </li>
@@ -1525,7 +1532,7 @@ export default defineConfig({
       {Object.keys(files).length > 0 && (
         <div className="mt-6">
           <h2 className="text-lg font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-cyan-400">👀 Sandpack Live Preview</h2>
-          <div className="rounded-xl overflow-hidden border border-violet-500/30 shadow-[0_0_15px_rgba(138,43,226,0.1)] relative">
+          <div className="rounded-xl overflow-hidden border border-violet-500/30 shadow-[0_0_15px_rgba(138,43,226,0.1)] relative w-full">
             <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-violet-500/70 to-transparent"></div>
             <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent"></div>
             
