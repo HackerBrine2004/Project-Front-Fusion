@@ -403,14 +403,33 @@ const CodeGenerator = () => {
     setLoading({ ...loading, generate: true });
 
     try {
+      // Add image sources to the prompt
+      const imageSources = `
+        Use the following image sources:
+        - Hero/Background images: https://source.unsplash.com/random/1920x1080/?{keyword}
+        - Profile/Avatar images: https://source.unsplash.com/random/400x400/?{keyword}
+        - Card/Feature images: https://source.unsplash.com/random/800x600/?{keyword}
+        - Logo/Icon images: https://source.unsplash.com/random/200x200/?{keyword}
+        Replace {keyword} with relevant terms like 'technology', 'business', 'nature', etc.
+        Always use proper alt text for accessibility.
+      `;
+
       const finalPrompt = prompt.trim()
-        ? `${prompt} using ${framework === 'both' ? 'React and Tailwind CSS' : framework}`
-        : 'Create a basic responsive UI using Tailwind CSS';
+        ? `${prompt} using ${framework === 'both' ? 'React and Tailwind CSS' : framework}. ${imageSources}`
+        : `Create a basic responsive UI using Tailwind CSS. ${imageSources}`;
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/code/generate-ui`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: finalPrompt }),
+        body: JSON.stringify({ 
+          prompt: finalPrompt,
+          imageSources: {
+            hero: 'https://source.unsplash.com/random/1920x1080/?',
+            avatar: 'https://source.unsplash.com/random/400x400/?',
+            card: 'https://source.unsplash.com/random/800x600/?',
+            icon: 'https://source.unsplash.com/random/200x200/?'
+          }
+        }),
       });
 
       const contentType = response.headers.get('content-type');
