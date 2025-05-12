@@ -73,7 +73,7 @@ const SessionsPage = () => {
         body: JSON.stringify({
           name: "New Session " + new Date().toLocaleString(),
           files: {},
-          framework: "both",
+          framework: "tailwind",
           prompt: "",
           activeFile: "",
           hasGenerated: false,
