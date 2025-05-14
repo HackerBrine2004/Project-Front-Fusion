@@ -39,6 +39,9 @@ const CodeGenerator = () => {
   const [sessionId, setSessionId] = useState('');
   const [previewTheme, setPreviewTheme] = useState('');
   const [showColorPalette, setShowColorPalette] = useState(false);
+  const [showImageUpload, setShowImageUpload] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [uploadedImages, setUploadedImages] = useState({});
   const [customColors, setCustomColors] = useState({
     background: '#0f172a',
     text: '#e2e8f0',
@@ -48,6 +51,7 @@ const CodeGenerator = () => {
     accent: '#06b6d4'
   });
   const fileInputRef = useRef(null);
+  const imageInputRef = useRef(null);
   const previewRef = useRef(null);
   const router = useRouter();
   // const searchParams = useSearchParams();
@@ -1152,6 +1156,250 @@ export default defineConfig({
     );
   };
 
+  const handleImageClick = (e) => {
+    console.log('Click event:', e.target);
+    if (e.target.tagName === 'IMG') {
+      console.log('Image clicked:', e.target.src);
+      setSelectedImage({
+        element: e.target,
+        src: e.target.src,
+        alt: e.target.alt
+      });
+      setShowImageUpload(true);
+    }
+  };
+
+  // Add message handler for iframe
+  useEffect(() => {
+    const handleIframeMessage = (event) => {
+      if (event.data.type === 'imageClick') {
+        console.log('Received image click from iframe:', event.data);
+        setSelectedImage({
+          element: null,
+          src: event.data.src,
+          alt: event.data.alt
+        });
+        setShowImageUpload(true);
+      }
+    };
+
+    window.addEventListener('message', handleIframeMessage);
+    return () => window.removeEventListener('message', handleIframeMessage);
+  }, []);
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setError('Please upload an image file');
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Please log in to upload images');
+        router.push('/auth/login');
+        return;
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upload/upload`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to upload image');
+      }
+
+      const data = await response.json();
+      const imageUrl = `${process.env.NEXT_PUBLIC_API_URL}${data.image.url}`;
+
+      // Update the code with the new image URL
+      if (selectedImage && activeFile) {
+        console.log('Replacing image:', {
+          oldSrc: selectedImage.src,
+          newSrc: imageUrl,
+          activeFile
+        });
+
+        // Create a temporary div to parse the HTML
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = files[activeFile];
+
+        // Find the specific image that was clicked
+        const images = tempDiv.getElementsByTagName('img');
+        let foundImage = false;
+
+        for (let img of images) {
+          if (img.src === selectedImage.src || 
+              (selectedImage.alt && img.alt === selectedImage.alt)) {
+            img.src = imageUrl;
+            foundImage = true;
+            break;
+          }
+        }
+
+        if (foundImage) {
+          const updatedCode = tempDiv.innerHTML;
+          console.log('Code updated successfully');
+          setFiles(prev => ({ ...prev, [activeFile]: updatedCode }));
+          setUploadedImages(prev => ({ ...prev, [selectedImage.src]: imageUrl }));
+        } else {
+          console.log('Image not found in the code');
+        }
+      }
+
+      setShowImageUpload(false);
+      setSelectedImage(null);
+      setError('Image uploaded successfully!');
+      setTimeout(() => setError(''), 3000);
+    } catch (err) {
+      console.error('Image upload error:', err);
+      setError(err.message || 'Failed to upload image');
+    }
+  };
+
+  // Add ImageUploadModal component
+  const ImageUploadModal = () => {
+    if (!showImageUpload) return null;
+
+    const handleBackdropClick = (e) => {
+      if (e.target === e.currentTarget) {
+        setShowImageUpload(false);
+        setSelectedImage(null);
+      }
+    };
+
+    return (
+      <div 
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
+        onClick={handleBackdropClick}
+      >
+        <div 
+          className="bg-[#1a1a1d] p-6 rounded-2xl border border-violet-500/30 w-full max-w-md"
+          onClick={e => e.stopPropagation()}
+        >
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h3 className="text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-cyan-400">
+                Upload Image
+              </h3>
+              <p className="text-sm text-gray-400 mt-1">
+                Replace the selected image
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setShowImageUpload(false);
+                setSelectedImage(null);
+              }}
+              className="text-gray-400 hover:text-white transition-colors"
+            >
+              ✕
+            </button>
+          </div>
+
+          {selectedImage && (
+            <div className="mb-6">
+              <div className="relative aspect-video rounded-lg overflow-hidden bg-black/40 mb-4">
+                <img 
+                  src={selectedImage.src} 
+                  alt={selectedImage.alt}
+                  className="w-full h-full object-contain"
+                />
+              </div>
+              <p className="text-sm text-gray-400">
+                Current image: {selectedImage.alt || 'No description'}
+              </p>
+            </div>
+          )}
+
+          <div className="space-y-4">
+            <button
+              onClick={() => imageInputRef.current?.click()}
+              className="w-full px-4 py-3 bg-violet-600/70 hover:bg-violet-600/90 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Choose Image
+            </button>
+            <input
+              type="file"
+              ref={imageInputRef}
+              onChange={handleImageUpload}
+              accept="image/*"
+              className="hidden"
+            />
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Modify the iframe srcDoc to include the message handler
+  const getIframeContent = () => {
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <script src="https://cdn.tailwindcss.com"></script>
+          <style>
+            body { 
+              margin: 0; 
+              padding: 0; 
+              background-color: ${previewTheme ? getThemeStyles(previewTheme).background : '#ffffff'};
+              color: ${previewTheme ? getThemeStyles(previewTheme).text : '#000000'};
+            }
+            * {
+              border-color: ${previewTheme ? getThemeStyles(previewTheme).border : '#e5e7eb'};
+            }
+            img {
+              cursor: pointer;
+              transition: opacity 0.2s;
+            }
+            img:hover {
+              opacity: 0.8;
+            }
+          </style>
+          <script>
+            document.addEventListener('DOMContentLoaded', function() {
+              document.body.addEventListener('click', function(e) {
+                if (e.target.tagName === 'IMG') {
+                  console.log('Image clicked:', {
+                    src: e.target.src,
+                    alt: e.target.alt,
+                    index: Array.from(document.getElementsByTagName('img')).indexOf(e.target)
+                  });
+                  window.parent.postMessage({
+                    type: 'imageClick',
+                    src: e.target.src,
+                    alt: e.target.alt,
+                    index: Array.from(document.getElementsByTagName('img')).indexOf(e.target)
+                  }, '*');
+                }
+              });
+            });
+          </script>
+        </head>
+        <body>
+          ${extractCode(files[activeFile] || '<div class="p-4 text-gray-500">No preview available</div>')}
+        </body>
+      </html>
+    `;
+  };
+
   return (
   <div className="min-h-screen bg-[#0f0f11] text-white px-6 py-10 font-mono relative overflow-hidden">
     <Particles
@@ -1577,6 +1825,14 @@ export default defineConfig({
                     </button>
                   </div>
                 </div>
+                <div className="mb-4 p-3 bg-violet-500/10 border border-violet-500/20 rounded-lg">
+                  <div className="flex items-center gap-2 text-sm text-violet-300">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Click on any image in the preview to replace it with your own image</span>
+                  </div>
+                </div>
                 <div
                   ref={previewRef}
                   className="bg-white rounded-xl text-black overflow-auto min-h-[500px] border border-violet-500/30 relative"
@@ -1610,7 +1866,28 @@ export default defineConfig({
                             * {
                               border-color: ${previewTheme ? getThemeStyles(previewTheme).border : '#e5e7eb'};
                             }
+                            img {
+                              cursor: pointer;
+                              transition: opacity 0.2s;
+                            }
+                            img:hover {
+                              opacity: 0.8;
+                            }
                           </style>
+                          <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                              document.body.addEventListener('click', function(e) {
+                                if (e.target.tagName === 'IMG') {
+                                  window.parent.postMessage({
+                                    type: 'imageClick',
+                                    src: e.target.src,
+                                    alt: e.target.alt,
+                                    index: Array.from(document.getElementsByTagName('img')).indexOf(e.target)
+                                  }, '*');
+                                }
+                              });
+                            });
+                          </script>
                         </head>
                         <body>
                           ${extractCode(files[activeFile] || '<div class="p-4 text-gray-500">No preview available</div>')}
@@ -1696,6 +1973,9 @@ export default defineConfig({
 
       {/* Add the ColorPaletteModal component */}
       <ColorPaletteModal />
+
+      {/* Add the ImageUploadModal component */}
+      <ImageUploadModal />
     </div>
   </div>
 );
