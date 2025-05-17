@@ -418,48 +418,9 @@ const CodeGenerator = () => {
         Always use proper alt text for accessibility.
       `;
 
-      const componentInstructions = `
-        Create a modern React application with the following requirements:
-        1. Use functional components with proper React hooks
-        2. Implement proper component structure with separate components for:
-           - Navigation/Navbar
-           - Hero section
-           - About section
-           - Features section
-           - Contact form
-           - Footer
-        3. Use Tailwind CSS for styling with:
-           - Dark theme (bg-gray-900, bg-gray-800)
-           - Violet accents (violet-600, violet-700)
-           - Proper spacing (p-4, m-4, gap-4)
-           - Responsive design (sm:, md:, lg: breakpoints)
-           - Hover effects (hover:)
-           - Transitions (transition-all)
-        4. Include proper form handling with:
-           - Form validation
-           - Proper input styling
-           - Submit handling
-        5. Add proper image handling with:
-           - Responsive images
-           - Proper aspect ratios
-           - Loading states
-        6. Implement proper accessibility with:
-           - Semantic HTML
-           - ARIA labels
-           - Proper heading hierarchy
-        7. Add interactive elements with:
-           - Hover effects
-           - Focus states
-           - Active states
-        8. Use modern React practices:
-           - Proper state management
-           - Event handling
-           - Component composition
-      `;
-
       const finalPrompt = prompt.trim()
-        ? `${prompt} using ${framework === 'both' ? 'React and Tailwind CSS' : framework}. ${componentInstructions} ${imageSources}`
-        : `Create a basic responsive UI using Tailwind CSS. ${componentInstructions} ${imageSources}`;
+        ? `${prompt} using ${framework === 'both' ? 'React and Tailwind CSS' : framework}. ${imageSources}`
+        : `Create a basic responsive UI using Tailwind CSS. ${imageSources}`;
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/code/generate-ui`, {
         method: 'POST',
@@ -499,7 +460,7 @@ const CodeGenerator = () => {
       // Add necessary React files if framework is React
       if (framework === 'react' || framework === 'both') {
         const reactFiles = {
-          'src/index.js': `import React from 'react'
+          'src/main.jsx': `import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
 import './index.css'
@@ -509,153 +470,12 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <App />
   </React.StrictMode>
 )`,
-          'src/App.jsx': `import React from 'react';
-
-function App() {
-  return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      {/* Navigation */}
-      <nav className="bg-black/50 backdrop-blur-sm fixed w-full z-50 border-b border-violet-500/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center">
-              <img src="https://source.unsplash.com/random/200x200/?panther" alt="Black Panther Logo" className="h-8 w-8" />
-              <span className="ml-2 text-xl font-bold">Black Panther</span>
-            </div>
-            <div className="hidden md:block">
-              <div className="ml-10 flex items-baseline space-x-4">
-                <a href="#" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Home</a>
-                <a href="#" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">About</a>
-                <a href="#" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Features</a>
-                <a href="#" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Contact</a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      {/* Hero Section */}
-      <div className="relative pt-16">
-        <div className="absolute inset-0">
-          <img src="https://source.unsplash.com/random/1920x1080/?wakanda" alt="Wakanda Landscape" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-black/60"></div>
-        </div>
-        <div className="relative max-w-7xl mx-auto py-24 px-4 sm:py-32 sm:px-6 lg:px-8">
-          <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">Wakanda Forever</h1>
-          <p className="mt-6 text-xl text-gray-300 max-w-3xl">Protecting the world, one mission at a time.</p>
-          <div className="mt-10">
-            <a href="#" className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-violet-600 hover:bg-violet-700">
-              Learn More
-            </a>
-          </div>
-        </div>
-      </div>
-
-      {/* About Section */}
-      <div className="py-16 bg-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="lg:text-center">
-            <h2 className="text-3xl font-extrabold text-white sm:text-4xl">About Black Panther</h2>
-            <div className="mt-8 flex justify-center">
-              <img src="https://source.unsplash.com/random/400x400/?black-panther" alt="Black Panther Profile" className="rounded-full h-48 w-48 object-cover" />
-            </div>
-            <p className="mt-6 max-w-2xl text-xl text-gray-300 lg:mx-auto">
-              T'Challa is the king and protector of Wakanda. He uses his superpowers, enhanced by the heart-shaped herb, to defend his nation and the world from harm. He's a skilled warrior, a brilliant strategist, and a noble leader, always striving to do what is right.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Features Section */}
-      <div className="py-16 bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-extrabold text-white text-center mb-12">Key Features</h2>
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {/* Feature 1 */}
-            <div className="bg-gray-800 rounded-lg p-6 border border-violet-500/30">
-              <img src="https://source.unsplash.com/random/800x600/?vibranium" alt="Vibranium Technology" className="w-full h-48 object-cover rounded-lg mb-4" />
-              <h3 className="text-xl font-bold text-white mb-2">Vibranium Suit</h3>
-              <p className="text-gray-300">Advanced protection and energy absorption capabilities.</p>
-            </div>
-            {/* Feature 2 */}
-            <div className="bg-gray-800 rounded-lg p-6 border border-violet-500/30">
-              <img src="https://source.unsplash.com/random/800x600/?technology" alt="Wakandan Technology" className="w-full h-48 object-cover rounded-lg mb-4" />
-              <h3 className="text-xl font-bold text-white mb-2">Advanced Technology</h3>
-              <p className="text-gray-300">Wakanda's technological advancements are unmatched.</p>
-            </div>
-            {/* Feature 3 */}
-            <div className="bg-gray-800 rounded-lg p-6 border border-violet-500/30">
-              <img src="https://source.unsplash.com/random/800x600/?strategy" alt="Strategic Prowess" className="w-full h-48 object-cover rounded-lg mb-4" />
-              <h3 className="text-xl font-bold text-white mb-2">Strategic Prowess</h3>
-              <p className="text-gray-300">Master tactician and skilled combatant.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Contact Section */}
-      <div className="py-16 bg-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-extrabold text-white text-center mb-12">Contact Us</h2>
-          <div className="max-w-lg mx-auto">
-            <form className="space-y-6">
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-300">Name:</label>
-                <input type="text" id="name" className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-violet-500 focus:ring-violet-500" placeholder="Your Name" />
-              </div>
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-300">Email:</label>
-                <input type="email" id="email" className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-violet-500 focus:ring-violet-500" placeholder="Your Email" />
-              </div>
-              <div>
-                <label htmlFor="message" className="block text-sm font-medium text-gray-300">Message:</label>
-                <textarea id="message" rows="4" className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-violet-500 focus:ring-violet-500" placeholder="Your Message"></textarea>
-              </div>
-              <div>
-                <button type="submit" className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500">
-                  Send Message
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-
-      {/* Footer */}
-      <footer className="bg-black py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-gray-400">© 2024 Black Panther. All rights reserved.</p>
-        </div>
-      </footer>
-    </div>
-  );
-}
-
-export default App;`,
+          'src/App.jsx': themedFileData['index.html'],
           'src/index.css': `@tailwind base;
 @tailwind components;
-@tailwind utilities;
-
-/* Custom styles */
-body {
-  margin: 0;
-  padding: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-}
-
-/* Ensure Tailwind classes are applied */
-.bg-gray-900 { background-color: #111827; }
-.bg-gray-800 { background-color: #1f2937; }
-.bg-gray-700 { background-color: #374151; }
-.bg-black { background-color: #000000; }
-.text-white { color: #ffffff; }
-.text-gray-300 { color: #d1d5db; }
-.text-gray-400 { color: #9ca3af; }
-.border-violet-500\/30 { border-color: rgba(139, 92, 246, 0.3); }
-.bg-violet-600 { background-color: #7c3aed; }
-.hover\:bg-violet-700:hover { background-color: #6d28d9; }`,
+@tailwind utilities;`,
           'tailwind.config.js': `/** @type {import('tailwindcss').Config} */
-module.exports = {
+export default {
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -672,16 +492,21 @@ module.exports = {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Black Panther</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Generated UI</title>
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/index.js"></script>
+    <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>`,
+          'vite.config.js': `import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+})`,
           'package.json': `{
-  "name": "black-panther",
+  "name": "generated-ui",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -695,6 +520,10 @@ module.exports = {
     "react-dom": "^18.2.0",
     "tailwindcss": "^3.3.0",
     "@tailwindcss/forms": "^0.5.7"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.2.0",
+    "vite": "^5.0.0"
   }
 }`
         };
@@ -1548,6 +1377,11 @@ module.exports = {
             document.addEventListener('DOMContentLoaded', function() {
               document.body.addEventListener('click', function(e) {
                 if (e.target.tagName === 'IMG') {
+                  console.log('Image clicked:', {
+                    src: e.target.src,
+                    alt: e.target.alt,
+                    index: Array.from(document.getElementsByTagName('img')).indexOf(e.target)
+                  });
                   window.parent.postMessage({
                     type: 'imageClick',
                     src: e.target.src,
@@ -2015,7 +1849,51 @@ module.exports = {
                     </div>
                   )}
                   <iframe
-                    srcDoc={getIframeContent()}
+                    srcDoc={`
+                      <!DOCTYPE html>
+                      <html>
+                        <head>
+                          <meta charset="UTF-8">
+                          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                          <script src="https://cdn.tailwindcss.com"></script>
+                          <style>
+                            body { 
+                              margin: 0; 
+                              padding: 0; 
+                              background-color: ${previewTheme ? getThemeStyles(previewTheme).background : '#ffffff'};
+                              color: ${previewTheme ? getThemeStyles(previewTheme).text : '#000000'};
+                            }
+                            * {
+                              border-color: ${previewTheme ? getThemeStyles(previewTheme).border : '#e5e7eb'};
+                            }
+                            img {
+                              cursor: pointer;
+                              transition: opacity 0.2s;
+                            }
+                            img:hover {
+                              opacity: 0.8;
+                            }
+                          </style>
+                          <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                              document.body.addEventListener('click', function(e) {
+                                if (e.target.tagName === 'IMG') {
+                                  window.parent.postMessage({
+                                    type: 'imageClick',
+                                    src: e.target.src,
+                                    alt: e.target.alt,
+                                    index: Array.from(document.getElementsByTagName('img')).indexOf(e.target)
+                                  }, '*');
+                                }
+                              });
+                            });
+                          </script>
+                        </head>
+                        <body>
+                          ${extractCode(files[activeFile] || '<div class="p-4 text-gray-500">No preview available</div>')}
+                        </body>
+                      </html>
+                    `}
                     className="w-full h-[500px] border-0"
                     title="Preview"
                   />
@@ -2034,37 +1912,35 @@ module.exports = {
             <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-violet-500/70 to-transparent"></div>
             <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent"></div>
             
+            
             <Sandpack
               files={files}
               theme="dark"
-              template={framework === 'tailwind' ? 'static' : 'react'}
+              template={framework === 'tailwind' ? 'static' : 'vite-react'}
               options={{
                 showConsoleButton: true,
                 showInlineErrors: true,
                 showNavigator: true,
                 showLineNumbers: true,
                 showTabs: true,
-                classes: {
-                  'sp-wrapper': 'custom-sandpack-wrapper',
-                  'sp-layout': 'custom-sandpack-layout',
-                  'sp-tab-button': 'custom-sandpack-tab',
-                },
               }}
               customSetup={{
-                dependencies: {
+                dependencies: framework === 'tailwind' ? {} : {
                   'react': '^18.2.0',
                   'react-dom': '^18.2.0',
                   'tailwindcss': '^3.3.0',
-                  '@tailwindcss/forms': '^0.5.7'
+                  '@tailwindcss/forms': '^0.5.7',
+                  '@vitejs/plugin-react': '^4.2.0',
+                  'vite': '^5.0.0'
                 },
-                entry: framework === 'tailwind' ? '/index.html' : '/src/index.js'
+                entry: framework === 'tailwind' ? '/index.html' : '/src/main.jsx',
               }}
             />
           </div>
         </div>
       )}
       
-      {/* Add CSS animations and Sandpack custom styles */}
+      {/* Add CSS animations */}
       <style jsx global>{`
         @keyframes gradient {
           0% { background-position: 0% 50%; }
@@ -2092,50 +1968,6 @@ module.exports = {
         .scrollbar-thin::-webkit-scrollbar-thumb {
           background-color: rgba(124, 58, 237, 0.3);
           border-radius: 20px;
-        }
-
-        /* Custom Sandpack styles */
-        .custom-sandpack-wrapper {
-          border-radius: 0.75rem;
-          overflow: hidden;
-        }
-
-        .custom-sandpack-layout {
-          background-color: #1a1a1d !important;
-        }
-
-        .custom-sandpack-tab {
-          color: #e2e8f0 !important;
-          background-color: #2d2d30 !important;
-          border-color: rgba(124, 58, 237, 0.3) !important;
-        }
-
-        .custom-sandpack-tab[aria-selected="true"] {
-          background-color: #3d3d40 !important;
-          border-bottom-color: #7c3aed !important;
-        }
-
-        .sp-preview-container {
-          background-color: #ffffff !important;
-        }
-
-        .sp-editor {
-          background-color: #1a1a1d !important;
-        }
-
-        .sp-code-editor {
-          background-color: #1a1a1d !important;
-        }
-
-        .sp-wrapper {
-          --sp-colors-accent: #7c3aed !important;
-          --sp-colors-clickable: #7c3aed !important;
-          --sp-colors-disabled: #4b5563 !important;
-          --sp-colors-error: #ef4444 !important;
-          --sp-colors-error-surface: #7f1d1d !important;
-          --sp-colors-surface1: #1a1a1d !important;
-          --sp-colors-surface2: #2d2d30 !important;
-          --sp-colors-surface3: #3d3d40 !important;
         }
       `}</style>
 
