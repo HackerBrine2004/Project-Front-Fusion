@@ -11,7 +11,8 @@ const app = express();
 
 // Enable CORS for all routes
 app.use(cors({
-    origin: process.env.FRONTEND_URL || '*',
+    origin: '*' || process.env.FRONTEND_URL, // Replace with your frontend URL
+    exposedHeaders: ['Content-Disposition'],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true
 }));

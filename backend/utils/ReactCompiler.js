@@ -8,7 +8,6 @@ class ReactCompiler {
   constructor() {
     this.tempDir = path.join(os.tmpdir(), 'front-fusion-compile');
   }
-
   async compileReactCode(files) {
     try {
       // Create temporary directory if it doesn't exist
